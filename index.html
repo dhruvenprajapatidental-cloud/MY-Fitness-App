@@ -5,100 +5,410 @@
   <meta name='viewport' content='width=device-width, initial-scale=1, viewport-fit=cover'>
   <meta name='apple-mobile-web-app-capable' content='yes'>
   <meta name='apple-mobile-web-app-status-bar-style' content='black-translucent'>
-  <title>My Fitness App</title>
+  <title>MY Fitness App</title>
+  <!-- Early platform detection — runs before render to prevent flash -->
+  <script>
+  (function(){
+    var ua = navigator.userAgent || '';
+    var isIOS = /iPhone|iPad|iPod/.test(ua) ||
+                (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    var isAndroid = /Android/.test(ua) && /Mobile/.test(ua);
+    document.documentElement.classList.add(isIOS || isAndroid ? 'ios' : 'desktop');
+  })();
+  </script>
   <style>
+    /* ── RESET ──────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; }
+    body, h1, h2, h3, p { margin: 0; padding: 0; }
+    ul { list-style: none; margin: 0; padding: 0; }
+
+    /* ── SHARED TOKENS ───────────────────────── */
     :root {
-      --bg:#07101f; --bg2:#0d1730; --panel:rgba(255,255,255,.06); --panel2:rgba(255,255,255,.04);
-      --text:#eef4ff; --muted:#b7c3e8; --line:rgba(255,255,255,.10); --line2:rgba(255,255,255,.16);
-      --blue:#74d7ff; --purple:#a98dff; --green:#82f0a6; --yellow:#ffd479; --red:#ff8791;
-      --shadow:0 12px 34px rgba(0,0,0,.25); --radius:22px; --radius-sm:16px;
+      /* iOS Dark */
+      --ib:   #000;   --ib2: #1c1c1e; --ib3: #2c2c2e; --ib4: #3a3a3c;
+      --iblue: #0a84ff; --igreen: #30d158; --ired: #ff453a;
+      --iyel: #ffd60a; --ipur: #bf5af2;
+      --il1: #fff; --il2: rgba(255,255,255,.6); --il3: rgba(255,255,255,.28);
+      --isep: rgba(255,255,255,.12); --ifill: rgba(255,255,255,.08);
+      --itabh: 49px;
+      /* Desktop */
+      --panel:  rgba(18,28,45,.65); --panel2: rgba(18,28,45,.4);
+      --text: #f0f4ff; --muted: #9ba8cc;
+      --line: rgba(255,255,255,.08); --line2: rgba(255,255,255,.14);
+      --blue: #33ccff; --purple: #b366ff; --green: #33ff99;
+      --yellow: #ffcc00; --red: #ff4d4d;
+      --shadow: 0 16px 40px rgba(0,0,0,.45);
+      --r: 24px; --r2: 16px;
     }
-    * { box-sizing: border-box; }
-    html,body { margin:0; padding:0; color:var(--text); font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',Inter,Arial,sans-serif; background:
-       radial-gradient(900px 480px at 0% -5%, rgba(116,215,255,.18), transparent 55%),
-       radial-gradient(900px 520px at 100% 0%, rgba(169,141,255,.17), transparent 55%),
-       linear-gradient(180deg, var(--bg), #091123 55%, #060b15 100%);
+
+    /* ── iOS BASE ────────────────────────────── */
+    html.ios, html.ios body {
+      background: var(--ib);
+      color: var(--il1);
+      font-family: -apple-system, 'SF Pro Display', 'SF Pro Text', sans-serif;
+      min-height: 100vh;
+      padding: 0;
+      -webkit-text-size-adjust: 100%;
+      overflow-x: hidden;
     }
-    body { padding-left:max(12px, env(safe-area-inset-left)); padding-right:max(12px, env(safe-area-inset-right)); padding-top:max(12px, env(safe-area-inset-top)); padding-bottom:max(20px, env(safe-area-inset-bottom)); }
-    .app { max-width:1280px; margin:0 auto; }
-    .topbar { position:sticky; top:0; z-index:10; backdrop-filter: blur(18px); background:rgba(7,16,31,.72); border:1px solid var(--line); border-top:0; border-radius:0 0 24px 24px; box-shadow:var(--shadow); padding:14px; }
-    .title { font-size:clamp(1.4rem,3vw,2rem); font-weight:800; letter-spacing:-.03em; margin:0 0 6px; }
-    .subtitle { color:var(--muted); font-size:.96rem; margin:0 0 12px; }
-    .tabbar { display:flex; gap:8px; overflow:auto; padding-bottom:2px; }
-    .tabbar button { white-space:nowrap; border:1px solid var(--line); color:var(--text); background:rgba(255,255,255,.06); border-radius:999px; padding:10px 14px; font-weight:700; cursor:pointer; }
-    .tabbar button.active { background:linear-gradient(180deg, rgba(116,215,255,.18), rgba(116,215,255,.09)); border-color:rgba(116,215,255,.4); color:#e8fbff; }
-    .view { display:none; } .view.active { display:block; }
-    .hero { display:grid; grid-template-columns:1.3fr .7fr; gap:14px; margin:16px 0; }
-    .card { background:linear-gradient(180deg, var(--panel), var(--panel2)); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow); padding:16px; }
-    .card h2, .card h3 { margin:0 0 10px; }
+
+    /* ── DESKTOP BASE ────────────────────────── */
+    html.desktop body {
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', Inter, sans-serif;
+      padding-left:  max(12px, env(safe-area-inset-left));
+      padding-right: max(12px, env(safe-area-inset-right));
+      padding-top:   max(12px, env(safe-area-inset-top));
+      padding-bottom: max(20px, env(safe-area-inset-bottom));
+      min-height: 100vh;
+    }
+    html.desktop body::before {
+      content: ''; position: fixed; top:0; right:0; bottom:0; left:0; z-index: -1;
+      background:
+        radial-gradient(1000px 600px at 0% -5%, rgba(51,204,255,.15), transparent 60%),
+        radial-gradient(1000px 600px at 100% 0%, rgba(179,102,255,.12), transparent 60%),
+        linear-gradient(180deg, #040914, #060e1d 55%, #02040a 100%);
+      pointer-events: none;
+    }
+
+    /* ── APP WRAPPER ─────────────────────────── */
+    html.desktop .app { max-width: 1280px; margin: 0 auto; }
+    html.ios .app     { max-width: 100%; margin: 0; }
+
+    /* ── DESKTOP TOPBAR ──────────────────────── */
+    html.desktop .topbar {
+      position: sticky; top: 0; z-index: 10;
+      -webkit-backdrop-filter: blur(24px); backdrop-filter: blur(24px);
+      background: rgba(4,9,20,.68);
+      border: 1px solid var(--line); border-top: 0;
+      border-radius: 0 0 24px 24px;
+      box-shadow: var(--shadow); padding: 16px;
+    }
+    html.desktop .title-row { display:flex; align-items:center; gap:10px; margin-bottom:6px; }
+    html.desktop .title { font-size:clamp(1.5rem,3vw,2rem); font-weight:800; letter-spacing:-.03em; color:#e8f4ff; }
+    html.desktop .title-logo { width:32px; height:32px; color:var(--blue); }
+    html.desktop .subtitle { color:var(--muted); font-size:.96rem; margin:0 0 16px; }
+    html.desktop .tabbar { display:flex; gap:10px; overflow:auto; padding-bottom:4px; scrollbar-width:none; }
+    html.desktop .tabbar::-webkit-scrollbar { display:none; }
+    html.desktop .tabbar button {
+      white-space:nowrap; border:1px solid var(--line); color:var(--text);
+      background:rgba(255,255,255,.03); border-radius:999px; padding:12px 18px;
+      font-weight:600; cursor:pointer; transition:all .2s ease;
+    }
+    html.desktop .tabbar button:hover { background:rgba(255,255,255,.08); border-color:var(--line2); transform:translateY(-1px); }
+    html.desktop .tabbar button.active {
+      background:linear-gradient(180deg,rgba(51,204,255,.2),rgba(51,204,255,.05));
+      border-color:rgba(51,204,255,.5); color:#fff; box-shadow:0 4px 12px rgba(51,204,255,.2);
+    }
+
+    /* ── iOS TOPBAR ──────────────────────────── */
+    html.ios .topbar {
+      position: sticky; top: 0; z-index: 100;
+      -webkit-backdrop-filter: saturate(180%) blur(20px);
+      backdrop-filter: saturate(180%) blur(20px);
+      background: rgba(0,0,0,.9);
+      border-bottom: 0.5px solid var(--isep);
+      border-radius: 0; padding: 0 16px;
+      padding-top: env(safe-area-inset-top);
+    }
+    html.ios .title-row {
+      height: 44px; display:flex; align-items:center;
+      justify-content:center; gap:8px;
+    }
+    html.ios .title { font-size:17px; font-weight:600; color:var(--il1); letter-spacing:-.3px; }
+    html.ios .title-logo { width:20px; height:20px; color:var(--iblue); }
+    html.ios .subtitle { display:none; }
+    html.ios .tabbar  { display:none; }
+
+    /* ── iOS BOTTOM TAB BAR ──────────────────── */
+    .ios-tabbar { display:none; }
+    html.ios .ios-tabbar {
+      display: flex;
+      position: fixed; bottom:0; left:0; right:0; z-index:100;
+      height: calc(var(--itabh) + env(safe-area-inset-bottom));
+      padding-bottom: env(safe-area-inset-bottom);
+      background: rgba(18,18,18,.96);
+      -webkit-backdrop-filter: saturate(180%) blur(20px);
+      backdrop-filter: saturate(180%) blur(20px);
+      border-top: 0.5px solid var(--isep);
+      overflow-x: auto; overflow-y: hidden;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+    html.ios .ios-tabbar::-webkit-scrollbar { display:none; }
+    .ios-tab {
+      flex: 0 0 auto; min-width: 64px;
+      display:flex; flex-direction:column; align-items:center; justify-content:center;
+      gap:3px; padding:6px 8px 4px;
+      background:transparent; border:none; cursor:pointer;
+      color: var(--il2); -webkit-tap-highlight-color:transparent;
+      transition:color .15s ease;
+    }
+    .ios-tab.active { color: var(--iblue); }
+    .ios-tab svg { width:24px; height:24px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+    .ios-tab span { font-size:10px; font-weight:500; letter-spacing:0.1px; }
+
+    /* ── VIEWS ───────────────────────────────── */
+    .view { display:none; }
+    .view.active { display:block; }
+    html.desktop .view.active { animation:fadeIn .3s ease-out; }
+    @keyframes fadeIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+    html.ios .view { padding:16px 16px calc(var(--itabh) + env(safe-area-inset-bottom) + 16px); }
+    html.ios .view.active { animation:iosFade .25s ease-out; }
+    @keyframes iosFade { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+
+    /* ── HERO ────────────────────────────────── */
+    html.desktop .hero { display:grid; grid-template-columns:1.3fr .7fr; gap:16px; margin:20px 0; }
+    html.ios .hero      { display:flex; flex-direction:column; gap:0; margin:0; }
+
+    /* ── DESKTOP CARD ────────────────────────── */
+    html.desktop .card {
+      background:linear-gradient(180deg,var(--panel),var(--panel2));
+      -webkit-backdrop-filter:blur(16px); backdrop-filter:blur(16px);
+      border:1px solid var(--line); border-radius:var(--r);
+      box-shadow:var(--shadow); padding:20px; transition:border-color .3s ease;
+    }
+    html.desktop .card:hover { border-color:var(--line2); }
+    html.desktop .card h2,
+    html.desktop .card h3 { margin:0 0 12px; font-weight:700; letter-spacing:-.02em; }
+
+    /* ── iOS CARD ────────────────────────────── */
+    html.ios .card { background:var(--ib2); border:none; border-radius:16px; padding:16px; margin-bottom:12px; }
+    html.ios .card h2 { font-size:20px; font-weight:700; color:var(--il1); margin:0 0 12px; letter-spacing:-.4px; }
+    html.ios .card h3 { font-size:17px; font-weight:600; color:var(--il1); margin:0 0 10px; }
+
+    /* ── CHIPS ───────────────────────────────── */
     .chips { display:flex; flex-wrap:wrap; gap:8px; }
-    .chip { border-radius:999px; padding:8px 12px; font-size:.86rem; border:1px solid var(--line); background:rgba(255,255,255,.06); color:var(--text); }
-    .chip.blue { background:rgba(116,215,255,.10); border-color:rgba(116,215,255,.28); }
-    .chip.green { background:rgba(130,240,166,.10); border-color:rgba(130,240,166,.24); }
-    .chip.purple { background:rgba(169,141,255,.10); border-color:rgba(169,141,255,.24); }
-    .muted { color:var(--muted); }
-    .kpis { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; }
-    .kpi { background:rgba(255,255,255,.04); border:1px solid var(--line); border-radius:18px; padding:12px; }
-    .kpi .v { font-size:1.2rem; font-weight:800; } .kpi .l { color:var(--muted); font-size:.82rem; margin-top:4px; }
-    .section { margin:16px 0; }
+    html.desktop .chip { border-radius:999px; padding:6px 12px; font-size:.86rem; border:1px solid var(--line); background:rgba(255,255,255,.04); color:var(--text); font-weight:500; }
+    html.desktop .chip.blue   { background:rgba(51,204,255,.1);  border-color:rgba(51,204,255,.3);  color:#99e6ff; }
+    html.desktop .chip.green  { background:rgba(51,255,153,.1);  border-color:rgba(51,255,153,.3);  color:#99ffcc; }
+    html.desktop .chip.purple { background:rgba(179,102,255,.1); border-color:rgba(179,102,255,.3); color:#d9b3ff; }
+    html.ios .chip        { background:var(--ib3); border:none; border-radius:8px; color:var(--il1); font-size:13px; padding:5px 10px; font-weight:500; }
+    html.ios .chip.blue   { background:rgba(10,132,255,.18);  color:var(--iblue);  }
+    html.ios .chip.green  { background:rgba(48,209,88,.18);   color:var(--igreen); }
+    html.ios .chip.purple { background:rgba(191,90,242,.18);  color:var(--ipur);   }
+
+    /* ── MUTED / SMALL ───────────────────────── */
+    html.desktop .muted { color:var(--muted); line-height:1.5; }
+    html.desktop .small { font-size:.82rem; color:var(--muted); }
+    html.ios .muted     { color:var(--il2);  line-height:1.5; }
+    html.ios .small     { font-size:.82rem;  color:var(--il2); }
+
+    /* ── DESKTOP KPI ─────────────────────────── */
+    html.desktop .kpis { display:grid; grid-template-columns:repeat(2,1fr); gap:12px; }
+    html.desktop .kpi { background:rgba(255,255,255,.03); border:1px solid var(--line); border-radius:var(--r2); padding:16px; transition:transform .2s ease; }
+    html.desktop .kpi:hover { transform:translateY(-2px); background:rgba(255,255,255,.05); border-color:var(--line2); }
+    html.desktop .kpi .v { font-size:1.4rem; font-weight:800; color:#e8f4ff; }
+    html.desktop .kpi .l { color:var(--muted); font-size:.85rem; margin-top:6px; }
+
+    /* ── iOS KPI ─────────────────────────────── */
+    html.ios .kpis { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; }
+    html.ios .kpi { background:var(--ib3); border:none; border-radius:14px; padding:14px; }
+    html.ios .kpi .v { font-size:22px; font-weight:700; color:var(--il1); }
+    html.ios .kpi .l { font-size:12px; color:var(--il2); margin-top:4px; }
+
+    /* ── SECTION / HEADERS ───────────────────── */
+    html.desktop .section { margin:20px 0; }
+    html.ios     .section { margin:14px 0; }
     .todayHeader { display:flex; gap:12px; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; }
-    .pillrow { display:flex; gap:8px; flex-wrap:wrap; }
-    .btn { border:0; border-radius:999px; padding:10px 14px; cursor:pointer; font-weight:800; background:linear-gradient(180deg,#8febff,#66ceff); color:#06111b; box-shadow:0 8px 22px rgba(102,206,255,.22); }
-    .btn.secondary { background:rgba(255,255,255,.08); border:1px solid var(--line); color:var(--text); box-shadow:none; }
-    .btn.success { background:linear-gradient(180deg,#a8ffc4,#78e6a0); color:#062313; }
-    .btn.warn { background:linear-gradient(180deg,#ffe6a9,#ffd479); color:#261a06; }
-    .btn.danger { background:linear-gradient(180deg,#ffadb7,#ff7d89); color:#2b0610; }
-    .grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
-    .grid-3 { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
-    .exerciseList { display:grid; gap:12px; }
-    .exercise { display:grid; grid-template-columns:1.1fr .9fr; gap:12px; background:rgba(255,255,255,.04); border:1px solid var(--line); border-radius:22px; padding:12px; }
-    .exerciseName { font-size:1.03rem; font-weight:800; margin-bottom:6px; }
-    .repBadge { display:inline-block; padding:7px 11px; border-radius:999px; font-size:.84rem; background:rgba(255,212,121,.13); border:1px solid rgba(255,212,121,.26); color:#fff3cf; margin-bottom:8px; }
-    .cue { color:var(--muted); line-height:1.5; font-size:.95rem; margin-bottom:10px; }
-    .setTable { display:grid; gap:8px; }
-    .setRow { display:grid; grid-template-columns:56px 1fr 1fr 110px; gap:8px; align-items:center; }
-    .small { font-size:.82rem; color:var(--muted); }
-    input[type='number'], input[type='date'], input[type='text'], textarea, select { width:100%; background:rgba(255,255,255,.06); border:1px solid var(--line2); color:var(--text); border-radius:14px; padding:10px 12px; outline:none; }
-    textarea { min-height:110px; resize:vertical; }
-    input::placeholder, textarea::placeholder { color:#8fa0d3; }
-    .check { display:flex; align-items:center; gap:8px; justify-content:flex-end; }
-    input[type='checkbox'] { width:18px; height:18px; accent-color:#7be8ff; }
-    .mediaWrap { position:relative; min-height:230px; border-radius:18px; border:1px solid var(--line2); overflow:hidden; background:linear-gradient(135deg, rgba(116,215,255,.08), rgba(169,141,255,.09)); display:grid; place-items:center; }
-    .mediaWrap img { width:100%; height:100%; object-fit:contain; background:#0a1020; }
-    .placeholder { text-align:center; padding:16px; }
-    .placeholder .icon { font-size:2rem; margin-bottom:8px; opacity:.9; }
-    .inlineActions { display:flex; gap:8px; flex-wrap:wrap; justify-content:center; margin-top:10px; }
-    .dayCard { padding:14px; border-radius:18px; background:rgba(255,255,255,.04); border:1px solid var(--line); }
-    .accordion { display:grid; gap:12px; }
-    .accItem { border:1px solid var(--line); border-radius:22px; overflow:hidden; background:linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.03)); }
-    .accHead { padding:16px; display:flex; align-items:flex-start; justify-content:space-between; gap:10px; cursor:pointer; }
-    .accBody { display:none; padding:0 16px 16px; }
-    .accItem.open .accBody { display:block; }
-    .accItem.open .caret { transform:rotate(180deg); }
-    .caret { width:40px; height:40px; display:grid; place-items:center; border:1px solid var(--line); background:rgba(255,255,255,.06); border-radius:50%; transition:transform .2s ease; }
-    .chartBox { width:100%; height:260px; border:1px solid var(--line); border-radius:18px; background:rgba(255,255,255,.04); padding:8px; }
+    .pillrow { display:flex; gap:8px; flex-wrap:wrap; margin-top:8px; }
+
+    /* ── DESKTOP BUTTONS ─────────────────────── */
+    html.desktop .btn {
+      border:0; border-radius:999px; padding:12px 18px; cursor:pointer;
+      font-weight:700; background:linear-gradient(135deg,#33ccff,#0099cc); color:#000;
+      box-shadow:0 6px 16px rgba(51,204,255,.25); transition:all .2s ease;
+    }
+    html.desktop .btn:hover   { transform:translateY(-2px); box-shadow:0 8px 20px rgba(51,204,255,.4); filter:brightness(1.1); }
+    html.desktop .btn:active  { transform:translateY(1px); }
+    html.desktop .btn.secondary { background:rgba(255,255,255,.06); border:1px solid var(--line); color:var(--text); box-shadow:none; }
+    html.desktop .btn.secondary:hover { background:rgba(255,255,255,.1); }
+    html.desktop .btn.success { background:linear-gradient(135deg,#33ff99,#00cc66); color:#00331a; box-shadow:0 6px 16px rgba(51,255,153,.2); }
+    html.desktop .btn.warn    { background:linear-gradient(135deg,#ffcc00,#cca300); color:#332900; }
+    html.desktop .btn.danger  { background:linear-gradient(135deg,#ff4d4d,#cc0000); color:#fff;    }
+
+    /* ── iOS BUTTONS ─────────────────────────── */
+    html.ios .btn {
+      border:0; border-radius:14px; padding:14px 20px; cursor:pointer;
+      font-weight:600; font-size:15px;
+      background:var(--iblue); color:#fff;
+      min-height:44px; box-shadow:none;
+      transition:opacity .15s ease; -webkit-tap-highlight-color:transparent;
+    }
+    html.ios .btn:active    { opacity:.65; }
+    html.ios .btn.secondary { background:var(--ib3); color:var(--il1); }
+    html.ios .btn.success   { background:var(--igreen); color:#fff; }
+    html.ios .btn.warn      { background:var(--iyel);   color:#000; }
+    html.ios .btn.danger    { background:var(--ired);   color:#fff; }
+
+    /* ── GRIDS ───────────────────────────────── */
+    html.desktop .grid-2 { display:grid; grid-template-columns:1fr 1fr;       gap:16px; }
+    html.desktop .grid-3 { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; }
+    html.ios .grid-2, html.ios .grid-3 { display:flex; flex-direction:column; gap:12px; }
+
+    /* ── EXERCISE LIST ───────────────────────── */
+    html.desktop .exerciseList { display:grid; gap:16px; }
+    html.ios     .exerciseList { display:grid; gap:12px; }
+
+    /* ── DESKTOP EXERCISE CARD ───────────────── */
+    html.desktop .exercise {
+      display:grid; grid-template-columns:1.2fr .8fr; gap:16px;
+      background:rgba(255,255,255,.02); border:1px solid var(--line);
+      border-radius:var(--r); padding:16px; transition:border-color .3s ease;
+    }
+    html.desktop .exercise:hover { border-color:var(--line2); background:rgba(255,255,255,.03); }
+    html.desktop .exerciseName { font-size:1.1rem; font-weight:800; margin-bottom:8px; }
+    html.desktop .repBadge { display:inline-block; padding:6px 10px; border-radius:8px; font-size:.84rem; font-weight:600; background:rgba(255,204,0,.15); border:1px solid rgba(255,204,0,.3); color:#ffe680; margin-bottom:10px; }
+    html.desktop .cue { color:var(--muted); line-height:1.5; font-size:.92rem; margin-bottom:14px; }
+    html.desktop .setTable { display:grid; gap:10px; }
+    html.desktop .setRow { display:grid; grid-template-columns:60px 1fr 1fr 90px; gap:10px; align-items:center; }
+
+    /* ── iOS EXERCISE CARD ───────────────────── */
+    html.ios .exercise {
+      display:grid; grid-template-columns:1fr; gap:12px;
+      background:var(--ib2); border:none; border-radius:16px; padding:16px;
+    }
+    html.ios .exerciseName { font-size:17px; font-weight:600; color:var(--il1); margin-bottom:6px; }
+    html.ios .repBadge { background:rgba(255,214,10,.15); border:none; border-radius:8px; color:var(--iyel); font-size:13px; font-weight:600; padding:5px 10px; margin-bottom:8px; display:inline-block; }
+    html.ios .cue { color:var(--il2); line-height:1.5; font-size:14px; margin-bottom:12px; }
+    html.ios .setTable { display:grid; gap:8px; }
+    html.ios .setRow { display:grid; grid-template-columns:50px 1fr 1fr 76px; gap:8px; align-items:center; }
+
+    /* ── INPUTS ──────────────────────────────── */
+    html.desktop input[type='number'],
+    html.desktop input[type='date'],
+    html.desktop input[type='text'],
+    html.desktop textarea,
+    html.desktop select {
+      width:100%; background:rgba(0,0,0,.2); border:1px solid var(--line);
+      color:var(--text); border-radius:12px; padding:12px; outline:none;
+      transition:all .2s ease; font-family:inherit;
+    }
+    html.desktop input:focus,
+    html.desktop textarea:focus,
+    html.desktop select:focus { border-color:var(--blue); background:rgba(0,0,0,.4); box-shadow:0 0 0 3px rgba(51,204,255,.1); }
+    html.desktop textarea { min-height:120px; resize:vertical; }
+    html.desktop input::placeholder, html.desktop textarea::placeholder { color:var(--line2); }
+
+    html.ios input[type='number'],
+    html.ios input[type='date'],
+    html.ios input[type='text'],
+    html.ios textarea,
+    html.ios select {
+      width:100%; background:var(--ib3); border:none;
+      color:var(--il1); border-radius:10px; padding:14px; outline:none;
+      font-family:-apple-system,sans-serif; font-size:15px; min-height:44px;
+      -webkit-appearance:none;
+    }
+    html.ios input:focus,
+    html.ios textarea:focus,
+    html.ios select:focus { box-shadow:inset 0 0 0 2px var(--iblue); }
+    html.ios textarea { min-height:120px; resize:vertical; }
+    html.ios input::placeholder, html.ios textarea::placeholder { color:var(--il3); }
+
+    /* ── CHECKBOX ────────────────────────────── */
+    .check { display:flex; align-items:center; gap:8px; justify-content:flex-end; cursor:pointer; }
+    html.desktop input[type='checkbox'] { width:20px; height:20px; accent-color:var(--blue); cursor:pointer; }
+    html.ios     input[type='checkbox'] { width:22px; height:22px; accent-color:var(--iblue); cursor:pointer; }
+
+    /* ── MEDIA WRAP ──────────────────────────── */
+    html.desktop .mediaWrap { position:relative; min-height:240px; border-radius:16px; border:1px solid var(--line); overflow:hidden; background:linear-gradient(135deg,rgba(51,204,255,.05),rgba(179,102,255,.05)); display:grid; place-items:center; }
+    html.ios     .mediaWrap { position:relative; min-height:200px; border-radius:14px; border:none; overflow:hidden; background:var(--ib3); display:grid; place-items:center; }
+    .mediaWrap img { width:100%; height:100%; object-fit:contain; background:#000; }
+    .placeholder { text-align:center; padding:20px; }
+    .placeholder .icon { font-size:2.5rem; margin-bottom:12px; opacity:.8; }
+    html.ios .placeholder .icon { font-size:2rem; margin-bottom:8px; }
+    .inlineActions { display:flex; gap:10px; flex-wrap:wrap; justify-content:center; margin-top:14px; }
+
+    /* ── DAY CARD ────────────────────────────── */
+    html.desktop .dayCard { padding:18px; border-radius:var(--r2); background:rgba(255,255,255,.02); border:1px solid var(--line); transition:background .2s ease; }
+    html.desktop .dayCard:hover { background:rgba(255,255,255,.04); }
+    html.ios .dayCard { padding:14px; border-radius:14px; background:var(--ib3); border:none; }
+
+    /* ── ACCORDION ───────────────────────────── */
+    html.desktop .accordion { display:grid; gap:16px; }
+    html.desktop .accItem { border:1px solid var(--line); border-radius:var(--r); overflow:hidden; background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.01)); transition:all .3s ease; }
+    html.desktop .accHead { padding:18px; display:flex; align-items:flex-start; justify-content:space-between; gap:12px; cursor:pointer; transition:background .2s ease; }
+    html.desktop .accHead:hover { background:rgba(255,255,255,.03); }
+    html.desktop .accBody { display:none; padding:0 18px 18px; }
+    html.desktop .accItem.open { border-color:var(--line2); background:rgba(255,255,255,.04); }
+    html.desktop .accItem.open .accBody { display:block; animation:fadeIn .3s ease-out; }
+    html.desktop .accItem.open .caret { transform:rotate(180deg); background:rgba(51,204,255,.1); border-color:rgba(51,204,255,.3); color:var(--blue); }
+    html.desktop .caret { width:40px; height:40px; display:grid; place-items:center; border:1px solid var(--line); background:rgba(255,255,255,.04); border-radius:50%; transition:all .3s ease; }
+
+    html.ios .accordion { display:grid; gap:10px; }
+    html.ios .accItem { border:none; border-radius:16px; overflow:hidden; background:var(--ib2); }
+    html.ios .accHead { padding:16px; display:flex; align-items:flex-start; justify-content:space-between; gap:10px; cursor:pointer; }
+    html.ios .accBody { display:none; padding:0 16px 16px; }
+    html.ios .accItem.open .accBody { display:block; animation:iosFade .25s ease-out; }
+    html.ios .accItem.open .caret { transform:rotate(180deg); }
+    html.ios .caret { width:36px; height:36px; display:grid; place-items:center; border:none; background:var(--ib3); border-radius:50%; transition:transform .25s ease; color:var(--iblue); }
+
+    /* ── CHART BOX ───────────────────────────── */
+    html.desktop .chartBox { width:100%; height:280px; border:1px solid var(--line); border-radius:var(--r2); background:rgba(0,0,0,.2); padding:10px; }
+    html.ios     .chartBox { width:100%; height:240px; border:none; border-radius:14px; background:var(--ib3); padding:8px; }
     canvas { width:100%; height:100%; }
-    .toolbar { display:flex; gap:8px; flex-wrap:wrap; }
-    .photoGrid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
-    .photoSlot { border:1px dashed rgba(255,255,255,.22); border-radius:18px; padding:12px; background:rgba(255,255,255,.03); }
-    .photoPreview { width:100%; aspect-ratio:3/4; border-radius:14px; border:1px solid var(--line); background:#0a1020; object-fit:cover; display:block; margin-bottom:10px; }
+
+    /* ── TOOLBAR ─────────────────────────────── */
+    .toolbar { display:flex; gap:10px; flex-wrap:wrap; }
+
+    /* ── PHOTOS ──────────────────────────────── */
+    html.desktop .photoGrid { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; }
+    html.desktop .photoSlot { border:1px dashed var(--line2); border-radius:var(--r2); padding:16px; background:rgba(255,255,255,.02); transition:border-color .2s ease; }
+    html.desktop .photoSlot:hover { border-color:rgba(255,255,255,.3); }
+    html.desktop .photoPreview { width:100%; aspect-ratio:3/4; border-radius:12px; border:1px solid var(--line); background:#000; object-fit:cover; display:block; margin-bottom:12px; }
+    html.ios .photoGrid { display:grid; grid-template-columns:1fr; gap:12px; }
+    html.ios .photoSlot { border:1px dashed rgba(255,255,255,.2); border-radius:14px; padding:14px; background:var(--ib2); }
+    html.ios .photoPreview { width:100%; aspect-ratio:3/4; border-radius:12px; border:none; background:var(--ib3); object-fit:cover; display:block; margin-bottom:10px; }
+
+    /* ── ROW / TABLE LIST ────────────────────── */
     .row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
-    .tableList { display:grid; gap:8px; }
-    .listRow { display:grid; grid-template-columns:1fr auto auto; gap:8px; align-items:center; padding:10px 12px; border-radius:14px; background:rgba(255,255,255,.04); border:1px solid var(--line); }
-    .footerNote { color:var(--muted); text-align:center; font-size:.84rem; margin:18px 0 8px; }
-    .status { font-size:.82rem; color:var(--muted); }
-    .progressBar { position:relative; height:10px; border-radius:999px; background:rgba(255,255,255,.08); border:1px solid var(--line); overflow:hidden; }
-    .progressFill { position:absolute; left:0; top:0; bottom:0; width:0%; background:linear-gradient(90deg,#84f1ab,#73d4ff); }
+    .tableList { display:grid; gap:10px; }
+    html.desktop .listRow { display:grid; grid-template-columns:1fr auto auto; gap:10px; align-items:center; padding:14px 16px; border-radius:14px; background:rgba(255,255,255,.03); border:1px solid var(--line); transition:transform .2s ease; }
+    html.desktop .listRow:hover { transform:translateY(-2px); background:rgba(255,255,255,.05); }
+    html.ios .listRow { display:grid; grid-template-columns:1fr auto auto; gap:10px; align-items:center; padding:14px 16px; border-radius:12px; background:var(--ib2); border:none; min-height:44px; }
+
+    /* ── FOOTER ──────────────────────────────── */
+    html.desktop .footerNote { color:var(--muted); text-align:center; font-size:.84rem; margin:24px 0 12px; }
+    html.ios .footerNote { display:none; }
+
+    /* ── STATUS / PROGRESS ───────────────────── */
+    html.desktop .status { font-size:.85rem; color:var(--muted); font-weight:600; }
+    html.ios     .status { font-size:14px;   color:var(--il2);   font-weight:500; }
+    html.desktop .progressBar { position:relative; height:12px; border-radius:999px; background:rgba(0,0,0,.3); border:1px solid var(--line); overflow:hidden; box-shadow:inset 0 1px 3px rgba(0,0,0,.5); }
+    html.desktop .progressFill { position:absolute; left:0; top:0; bottom:0; width:0%; background:linear-gradient(90deg,#33ccff,#b366ff); transition:width .4s cubic-bezier(0.4,0,0.2,1); }
+    html.ios .progressBar { position:relative; height:8px; border-radius:999px; background:var(--ib3); border:none; overflow:hidden; }
+    html.ios .progressFill { position:absolute; left:0; top:0; bottom:0; width:0%; background:var(--iblue); transition:width .4s ease; }
+
+    /* ── SHARED UTILS ────────────────────────── */
     .hidden { display:none !important; }
-    @media (max-width: 980px) { .hero,.grid-2,.grid-3,.exercise { grid-template-columns:1fr; } .photoGrid{grid-template-columns:1fr;} }
-    @media (max-width: 640px) { .setRow { grid-template-columns:48px 1fr 1fr 90px; } .topbar { border-radius:0 0 18px 18px; } .listRow { grid-template-columns:1fr auto; } .listRow .muted.small { grid-column:1 / -1; } }
+
+    /* ── DESKTOP RESPONSIVE ──────────────────── */
+    @media (max-width: 980px) {
+      html.desktop .hero,
+      html.desktop .grid-2,
+      html.desktop .grid-3,
+      html.desktop .exercise { grid-template-columns:1fr; }
+      html.desktop .photoGrid { grid-template-columns:1fr; }
+    }
+    @media (max-width: 640px) {
+      html.desktop .setRow { grid-template-columns:50px 1fr 1fr 70px; gap:6px; }
+      html.desktop .topbar { border-radius:0 0 20px 20px; padding:12px; }
+      html.desktop .listRow { grid-template-columns:1fr auto; }
+      html.desktop .listRow .muted.small { grid-column:1 / -1; }
+    }
   </style>
 </head>
 <body>
 <div class='app'>
   <header class='topbar'>
-    <div class='title'>My Fitness App</div>
-    <div class='subtitle'>8-week aesthetic trainer app •</div>
+    <div class='title-row'>
+      <svg class='title-logo' viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M6.5 6.5h11M6.5 17.5h11M3 9.5v5M21 9.5v5M6.5 9.5v5M17.5 9.5v5M9.5 12h5" />
+      </svg>
+      <h1 class='title'>MY Fitness App</h1>
+    </div>
+    <div class='subtitle'>8-week aesthetic trainer app • offline-first</div>
     <nav class='tabbar' id='tabs'>
       <button class='active' data-view='dashboard'>Dashboard</button>
       <button data-view='today'>Today</button>
@@ -365,10 +675,52 @@
       </div>
     </section>
   </main>
+
+  <!-- iOS Native Bottom Tab Bar -->
+  <nav class='ios-tabbar' id='ios-tabs'>
+    <button class='ios-tab active' data-view='dashboard'>
+      <svg viewBox='0 0 24 24'><path d='M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z'/><polyline points='9 22 9 12 15 12 15 22'/></svg>
+      <span>Home</span>
+    </button>
+    <button class='ios-tab' data-view='today'>
+      <svg viewBox='0 0 24 24'><path d='M6.5 6.5h11M6.5 17.5h11M3 9.5v5M21 9.5v5M6.5 9.5v5M17.5 9.5v5M9.5 12h5'/></svg>
+      <span>Today</span>
+    </button>
+    <button class='ios-tab' data-view='split'>
+      <svg viewBox='0 0 24 24'><line x1='8' y1='6' x2='21' y2='6'/><line x1='8' y1='12' x2='21' y2='12'/><line x1='8' y1='18' x2='21' y2='18'/><line x1='3' y1='6' x2='3.01' y2='6'/><line x1='3' y1='12' x2='3.01' y2='12'/><line x1='3' y1='18' x2='3.01' y2='18'/></svg>
+      <span>Split</span>
+    </button>
+    <button class='ios-tab' data-view='progress'>
+      <svg viewBox='0 0 24 24'><polyline points='22 12 18 12 15 21 9 3 6 12 2 12'/></svg>
+      <span>Progress</span>
+    </button>
+    <button class='ios-tab' data-view='photos'>
+      <svg viewBox='0 0 24 24'><path d='M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z'/><circle cx='12' cy='13' r='4'/></svg>
+      <span>Photos</span>
+    </button>
+    <button class='ios-tab' data-view='notes'>
+      <svg viewBox='0 0 24 24'><path d='M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z'/><polyline points='14 2 14 8 20 8'/><line x1='16' y1='13' x2='8' y2='13'/><line x1='16' y1='17' x2='8' y2='17'/></svg>
+      <span>Notes</span>
+    </button>
+    <button class='ios-tab' data-view='library'>
+      <svg viewBox='0 0 24 24'><rect x='2' y='2' width='20' height='20' rx='2.18'/><line x1='7' y1='2' x2='7' y2='22'/><line x1='17' y1='2' x2='17' y2='22'/><line x1='2' y1='12' x2='22' y2='12'/></svg>
+      <span>Library</span>
+    </button>
+    <button class='ios-tab' data-view='settings'>
+      <svg viewBox='0 0 24 24'><circle cx='12' cy='12' r='3'/><path d='M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z'/></svg>
+      <span>Settings</span>
+    </button>
+  </nav>
+
   <div class='footerNote'>Built for your 8-week aesthetic split. Best on iPhone Safari or any modern browser. Fully offline after the file is saved locally and your GIFs/photos are uploaded once.</div>
 </div>
 
 <script>
+// iOS Safari <15.4 polyfill for structuredClone
+if (typeof structuredClone === 'undefined') {
+  window.structuredClone = function(obj) { return JSON.parse(JSON.stringify(obj)); };
+}
+
 const PROGRAM = [{"id": "day1", "name": "Day 1 – Shoulders + Triceps + Abs", "focus": "Round delts + triceps size", "cardio": "15–20 min incline walk", "notes": ["Start with overhead press while fresh.", "Keep lateral raises strict — no swing reps.", "Use triceps exercises for tension and squeeze, not ego weight."], "exercises": [["Overhead Press", "4 x 6–8", "Ribs down, glutes tight, bar path close to face.", "day1-overhead-press", 4], ["Dumbbell Lateral Raise", "4 x 12–18", "Small elbow bend, raise only to shoulder height.", "day1-dumbbell-lateral-raise", 4], ["Cable / Machine Lateral Raise", "3 x 12–15", "Constant tension, short pause at top.", "day1-cable-machine-lateral-raise", 3], ["Rear Delt Fly / Reverse Pec Deck", "4 x 12–15", "Lead with elbows, keep traps quiet.", "day1-rear-delt-fly-reverse-pec-deck", 4], ["Close-Grip Bench Press", "3 x 8–10", "Shoulders packed, elbows controlled.", "day1-close-grip-bench-press", 3], ["Assisted Dips (alt)", "3 x 8–10", "Use assistance if shoulders or depth feel bad.", "day1-assisted-dips-alt", 3], ["Overhead Triceps Extension", "3 x 10–12", "Keep elbows fixed, long-head stretch.", "day1-overhead-triceps-extension", 3], ["Rope Pushdown", "3 x 12–15", "Spread rope apart at bottom.", "day1-rope-pushdown", 3], ["Cable Crunch", "4 x 12–15", "Crunch ribs to pelvis, don’t hinge.", "day1-cable-crunch", 4], ["Hanging Leg Raise", "3 x 10–15", "Posterior pelvic tilt first, no swing.", "day1-hanging-leg-raise", 3]]}, {"id": "day2", "name": "Day 2 – Back + Biceps", "focus": "V-taper + arms", "cardio": "10–15 min walk or cycle", "notes": ["Pull with elbows, not just hands.", "Rows stay chest-up and stable.", "On curls, own the lowering phase."], "exercises": [["Lat Pulldown", "4 x 8–12", "Shoulders down first, elbows drive toward ribs.", "day2-lat-pulldown", 4], ["Pull-Up (alt)", "4 x 6–10", "Full hang with control, chest up.", "day2-pull-up-alt", 4], ["Seated Cable Row", "4 x 8–12", "Pull to lower ribs, don’t rock back.", "day2-seated-cable-row", 4], ["Single-Arm Dumbbell Row", "3 x 10–12", "Flat back, no torso twist.", "day2-single-arm-dumbbell-row", 3], ["Straight-Arm Pulldown", "3 x 12–15", "Feel your lats stretch and contract.", "day2-straight-arm-pulldown", 3], ["Face Pull", "3 x 12–15", "Elbows high, pull to forehead.", "day2-face-pull", 3], ["EZ / Barbell Curl", "3 x 8–10", "Upper arm by side, no body swing.", "day2-ez-barbell-curl", 3], ["Incline Dumbbell Curl", "3 x 10–12", "Deep stretch at bottom.", "day2-incline-dumbbell-curl", 3], ["Hammer Curl", "3 x 10–12", "Neutral grip, don’t let elbows drift back.", "day2-hammer-curl", 3]]}, {"id": "day3", "name": "Day 3 – Legs + Glute Control + Abs", "focus": "Shape, balance, metabolism", "cardio": "20–25 min incline treadmill or brisk walk", "notes": ["Train legs properly — don’t skip them.", "RDL is a hinge, not a squat.", "Lunges are for control and shape."], "exercises": [["Squat", "4 x 8–10", "Brace, knees track over toes, use controllable depth.", "day3-squat", 4], ["Leg Press (alt)", "4 x 8–10", "Keep glutes on the pad, no low-back rounding.", "day3-leg-press-alt", 4], ["Romanian Deadlift", "4 x 8–10", "Soft knees, hips back, bar close to legs.", "day3-romanian-deadlift", 4], ["Walking Lunges", "3 x 12 steps each leg", "Stay rooted and balanced.", "day3-walking-lunges", 3], ["Leg Curl", "3 x 12–15", "Control the return.", "day3-leg-curl", 3], ["Leg Extension", "3 x 12–15", "Pause and squeeze quads at top.", "day3-leg-extension", 3], ["Standing Calf Raise", "4 x 12–15", "Full stretch at bottom, full squeeze at top.", "day3-standing-calf-raise", 4], ["Decline Crunch", "3 x 15", "Curl, don’t yank the neck.", "day3-decline-crunch", 3], ["Plank", "3 x 45–60 sec", "Glutes tight, ribs down.", "day3-plank", 3], ["Russian Twist / Core Twist", "3 x 20", "Rotate with control, don’t fling.", "day3-russian-twist-core-twist", 3]]}, {"id": "day4", "name": "Day 4 – Chest + Shoulders", "focus": "Upper chest + side delts", "cardio": "15 min incline walk", "notes": ["Incline press is the priority.", "Shoulders packed for pressing, traps quiet on raises.", "Push-up burnout = clean pump reps only."], "exercises": [["Incline Dumbbell Press", "4 x 8–10", "Bench around 20–30°, elbows under wrists.", "day4-incline-dumbbell-press", 4], ["Machine Chest Press", "3 x 6–10", "Feet planted, smooth pressing path.", "day4-machine-chest-press", 3], ["Bench Press (alt)", "3 x 6–10", "Control down, no bounce.", "day4-bench-press-alt", 3], ["Cable Fly", "3 x 12–15", "Hug motion, big chest squeeze.", "day4-cable-fly", 3], ["Seated Dumbbell Shoulder Press", "3 x 8–10", "No low-back arch.", "day4-seated-dumbbell-shoulder-press", 3], ["Dumbbell Lateral Raise", "4 x 12–20", "Strict, smooth, shoulders down.", "day4-dumbbell-lateral-raise", 4], ["Rear Delt Fly", "3 x 12–15", "Lead with elbows.", "day4-rear-delt-fly", 3], ["Push-Ups Burnout", "2 sets near failure", "Body in one line, full range.", "day4-push-ups-burnout", 2]]}, {"id": "day5", "name": "Day 5 – Arms Specialization + Abs", "focus": "Biceps, triceps, forearms, abs", "cardio": "15–20 min walk", "notes": ["Chase tension and pump, not ugly cheating.", "Vary elbow angle for fuller arm development.", "Keep forearm work clean if elbows feel tender."], "exercises": [["EZ Bar Curl", "4 x 8–10", "Squeeze the top.", "day5-ez-bar-curl", 4], ["Incline Curl", "3 x 10–12", "Deep stretch, shoulders back.", "day5-incline-curl", 3], ["Cable Curl", "3 x 12–15", "Constant tension; don’t rest at bottom.", "day5-cable-curl", 3], ["Close-Grip Push-Up", "3 x 10–12", "Pick a shoulder-friendly version.", "day5-close-grip-push-up", 3], ["Bench Dip (alt)", "3 x 10–12", "Stop if front shoulders feel cranky.", "day5-bench-dip-alt", 3], ["Overhead Triceps Extension", "3 x 10–12", "Deep stretch, stable elbows.", "day5-overhead-triceps-extension", 3], ["Rope Pushdown", "4 x 12–15", "Full extension every rep.", "day5-rope-pushdown", 4], ["Reverse Curl", "2–3 sets", "Control wrists; no bounce.", "day5-reverse-curl", 2], ["Wrist Curl (alt)", "2–3 sets", "Let the bar roll to fingers, then curl back.", "day5-wrist-curl-alt", 2], ["Cable Crunch", "4 x 12–15", "Crunch down, not back.", "day5-cable-crunch", 4], ["Leg Raise", "3 x 12–15", "Control swing, tuck pelvis.", "day5-leg-raise", 3], ["Side Plank", "3 x 30–45 sec/side", "Stack ribs over pelvis.", "day5-side-plank", 3]]}, {"id": "day6", "name": "Day 6 – Full Upper Pump + Fat-Loss Cardio", "focus": "Shape, blood flow, calorie burn", "cardio": "Choose one: 20–30 min incline walk OR 15 min moderate cycling", "notes": ["This day should feel productive, not crushing.", "Use a lighter pump style.", "If recovery is poor, do cardio + mobility only."], "exercises": [["Lat Pulldown", "3 x 12", "Smooth reps, focus on lat squeeze.", "day6-lat-pulldown", 3], ["Machine Chest Press", "3 x 12", "Controlled tempo, chest squeeze.", "day6-machine-chest-press", 3], ["Lateral Raise", "4 x 15–20", "Light, strict, burning reps.", "day6-lateral-raise", 4], ["Rear Delt Fly", "3 x 15", "Keep traps quiet.", "day6-rear-delt-fly", 3], ["Cable Curl", "3 x 15", "Constant tension.", "day6-cable-curl", 3], ["Rope Pushdown", "3 x 15", "Full extension every rep.", "day6-rope-pushdown", 3], ["Shrugs", "3 x 12–15", "Shrug straight up/down, do not roll shoulders.", "day6-shrugs", 3]]}, {"id": "day7", "name": "Day 7 – Rest / Active Recovery", "focus": "Recovery, posture, mobility", "cardio": "8k–12k steps + mobility", "notes": ["Walk, stretch, sleep well, hydrate.", "No junk binge today.", "Recovery is part of the aesthetic plan."], "exercises": [["Steps", "8,000–12,000", "Split through the day if needed.", "day7-steps", 8], ["Mobility + Stretching", "10–20 min", "Focus on shoulders, hips, chest, T-spine, hamstrings.", "day7-mobility-stretching", 10]]}];
 const STORAGE_KEY = 'aesthetic-offline-app-state-v1';
 const DB_NAME = 'aestheticOfflineMediaDB';
@@ -417,7 +769,10 @@ function getTodayDay() {
 }
 function parseSetCount(repString, fallback=3) { const m = String(repString).match(/^(\d+)/); return m ? parseInt(m[1],10) : fallback; }
 function getLogKey(date, exId, setIndex) { return `${date}__${exId}__${setIndex}`; }
-function setLogVal(date, exId, setIndex, payload) { state.logs[getLogKey(date, exId, setIndex)] = payload; saveState(); }
+function setLogVal(date, exId, setIndex, payload, skipSave=false) { 
+  state.logs[getLogKey(date, exId, setIndex)] = payload; 
+  if(!skipSave) saveState(); 
+}
 function getLogVal(date, exId, setIndex) { return state.logs[getLogKey(date, exId, setIndex)] || {weight:'', reps:'', done:false}; }
 function markSessionComplete(dayId, date) { const key = `${date}__${dayId}`; if (!state.completedSessions.includes(key)) state.completedSessions.push(key); saveState(); }
 function resetDay(dayId, date) { const day = getProgramDayById(dayId); day.exercises.forEach(ex => { const count = ex[4]; for(let i=1;i<=count;i++) delete state.logs[getLogKey(date, ex[3], i)]; }); state.completedSessions = state.completedSessions.filter(k => k !== `${date}__${dayId}`); saveState(); }
@@ -446,19 +801,32 @@ async function getPhoto(week, view) { const rec = await dbGet(`photo__${week}__$
 async function deletePhoto(week, view) { await dbDelete(`photo__${week}__${view}`); if (state.photoWeeks[week]) delete state.photoWeeks[week][view]; saveState(); }
 
 function setupTabs() {
-  document.querySelectorAll('#tabs button').forEach(btn=>{
-    btn.addEventListener('click',()=>{
-      document.querySelectorAll('#tabs button').forEach(b=>b.classList.remove('active'));
-      btn.classList.add('active');
-      document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
-      document.getElementById('view-'+btn.dataset.view).classList.add('active');
-      if (btn.dataset.view === 'today') renderToday();
-      if (btn.dataset.view === 'split') renderSplit();
-      if (btn.dataset.view === 'progress') renderProgress();
-      if (btn.dataset.view === 'photos') renderPhotos();
-      if (btn.dataset.view === 'library') renderLibrary();
+  function switchView(view) {
+    // Sync desktop tabs
+    document.querySelectorAll('#tabs button').forEach(b => {
+      b.classList.toggle('active', b.dataset.view === view);
     });
-  });
+    // Sync iOS tabs
+    document.querySelectorAll('.ios-tab').forEach(b => {
+      b.classList.toggle('active', b.dataset.view === view);
+    });
+    // Activate view
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    const target = document.getElementById('view-' + view);
+    if (target) target.classList.add('active');
+    // Lazy renders
+    if (view === 'today')    renderToday();
+    if (view === 'split')    renderSplit();
+    if (view === 'progress') renderProgress();
+    if (view === 'photos')   renderPhotos();
+    if (view === 'library')  renderLibrary();
+  }
+  document.querySelectorAll('#tabs button').forEach(btn =>
+    btn.addEventListener('click', () => switchView(btn.dataset.view))
+  );
+  document.querySelectorAll('.ios-tab').forEach(btn =>
+    btn.addEventListener('click', () => switchView(btn.dataset.view))
+  );
 }
 
 function setInner(el, html) { document.getElementById(el).innerHTML = html; }
@@ -499,15 +867,15 @@ window.saveExerciseSets = function(date, exId, setCount) {
     const weight = document.getElementById(`w-${exId}-${i}`)?.value || '';
     const reps = document.getElementById(`r-${exId}-${i}`)?.value || '';
     const done = document.getElementById(`d-${exId}-${i}`)?.checked || false;
-    setLogVal(date, exId, i, {weight, reps, done});
+    setLogVal(date, exId, i, {weight, reps, done}, true);
   }
-  updateDashboard();
-  renderProgress();
+  saveState();
 };
 window.triggerGifUpload = function(exId) { document.getElementById(`gif-input-${exId}`).click(); };
 window.handleGifUpload = async function(event, exId) {
   const file = event.target.files?.[0]; if (!file) return;
   await saveGifForExercise(exId, file);
+  splitRenderedDate = null; // force re-render
   renderToday(); renderSplit(); renderLibrary();
 };
 window.toggleAcc = function(id) { document.getElementById(id).classList.toggle('open'); };
@@ -525,8 +893,12 @@ async function renderToday() {
   updateDashboard();
 }
 
+let splitRenderedDate = null;
 async function renderSplit() {
+  const today = todayISO();
   const root = document.getElementById('splitAccordion');
+  if (splitRenderedDate === today && root.innerHTML !== '') return;
+  splitRenderedDate = today;
   let out = '';
   for (let idx=0; idx<PROGRAM.length; idx++) {
     const day = PROGRAM[idx];
@@ -645,7 +1017,7 @@ window.deleteGif = async function(exId) { await dbDelete(`gif__${exId}`); render
 
 async function exportBackup() {
   const files = await dbAll();
-  const payload = { exportedAt:new Date().toISOString(), app:'My Fitness App', version:'1.0', state, files };
+  const payload = { exportedAt:new Date().toISOString(), app:'MY Fitness App', version:'1.0', state, files };
   const blob = new Blob([JSON.stringify(payload)], {type:'application/json'});
   const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href=url; a.download='aesthetic-offline-backup-'+todayISO()+'.json'; a.click(); URL.revokeObjectURL(url);
 }
@@ -668,7 +1040,11 @@ function renderAll() { populateDaySelects(); populatePhotoWeeks(); renderToday()
 function renderNotes() { document.getElementById('generalNotes').value = state.generalNotes || ''; document.getElementById('dayNotesDate').value = todayISO(); }
 
 window.addEventListener('DOMContentLoaded', async () => {
-  mediaDB = await openDB();
+  try {
+    mediaDB = await openDB();
+  } catch(e) {
+    console.warn('IndexedDB not available:', e);
+  }
   setupTabs(); populateDaySelects(); populatePhotoWeeks();
   document.getElementById('weightDate').value = todayISO();
   document.getElementById('goTodayBtn').onclick = () => document.querySelector("button[data-view='today']").click();
