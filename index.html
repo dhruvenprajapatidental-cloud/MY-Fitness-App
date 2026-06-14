@@ -1,0 +1,701 @@
+<!doctype html>
+<html lang='en'>
+<head>
+  <meta charset='utf-8'>
+  <meta name='viewport' content='width=device-width, initial-scale=1, viewport-fit=cover'>
+  <meta name='apple-mobile-web-app-capable' content='yes'>
+  <meta name='apple-mobile-web-app-status-bar-style' content='black-translucent'>
+  <title>My Fitness App</title>
+  <style>
+    :root {
+      --bg:#07101f; --bg2:#0d1730; --panel:rgba(255,255,255,.06); --panel2:rgba(255,255,255,.04);
+      --text:#eef4ff; --muted:#b7c3e8; --line:rgba(255,255,255,.10); --line2:rgba(255,255,255,.16);
+      --blue:#74d7ff; --purple:#a98dff; --green:#82f0a6; --yellow:#ffd479; --red:#ff8791;
+      --shadow:0 12px 34px rgba(0,0,0,.25); --radius:22px; --radius-sm:16px;
+    }
+    * { box-sizing: border-box; }
+    html,body { margin:0; padding:0; color:var(--text); font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',Inter,Arial,sans-serif; background:
+       radial-gradient(900px 480px at 0% -5%, rgba(116,215,255,.18), transparent 55%),
+       radial-gradient(900px 520px at 100% 0%, rgba(169,141,255,.17), transparent 55%),
+       linear-gradient(180deg, var(--bg), #091123 55%, #060b15 100%);
+    }
+    body { padding-left:max(12px, env(safe-area-inset-left)); padding-right:max(12px, env(safe-area-inset-right)); padding-top:max(12px, env(safe-area-inset-top)); padding-bottom:max(20px, env(safe-area-inset-bottom)); }
+    .app { max-width:1280px; margin:0 auto; }
+    .topbar { position:sticky; top:0; z-index:10; backdrop-filter: blur(18px); background:rgba(7,16,31,.72); border:1px solid var(--line); border-top:0; border-radius:0 0 24px 24px; box-shadow:var(--shadow); padding:14px; }
+    .title { font-size:clamp(1.4rem,3vw,2rem); font-weight:800; letter-spacing:-.03em; margin:0 0 6px; }
+    .subtitle { color:var(--muted); font-size:.96rem; margin:0 0 12px; }
+    .tabbar { display:flex; gap:8px; overflow:auto; padding-bottom:2px; }
+    .tabbar button { white-space:nowrap; border:1px solid var(--line); color:var(--text); background:rgba(255,255,255,.06); border-radius:999px; padding:10px 14px; font-weight:700; cursor:pointer; }
+    .tabbar button.active { background:linear-gradient(180deg, rgba(116,215,255,.18), rgba(116,215,255,.09)); border-color:rgba(116,215,255,.4); color:#e8fbff; }
+    .view { display:none; } .view.active { display:block; }
+    .hero { display:grid; grid-template-columns:1.3fr .7fr; gap:14px; margin:16px 0; }
+    .card { background:linear-gradient(180deg, var(--panel), var(--panel2)); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow); padding:16px; }
+    .card h2, .card h3 { margin:0 0 10px; }
+    .chips { display:flex; flex-wrap:wrap; gap:8px; }
+    .chip { border-radius:999px; padding:8px 12px; font-size:.86rem; border:1px solid var(--line); background:rgba(255,255,255,.06); color:var(--text); }
+    .chip.blue { background:rgba(116,215,255,.10); border-color:rgba(116,215,255,.28); }
+    .chip.green { background:rgba(130,240,166,.10); border-color:rgba(130,240,166,.24); }
+    .chip.purple { background:rgba(169,141,255,.10); border-color:rgba(169,141,255,.24); }
+    .muted { color:var(--muted); }
+    .kpis { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; }
+    .kpi { background:rgba(255,255,255,.04); border:1px solid var(--line); border-radius:18px; padding:12px; }
+    .kpi .v { font-size:1.2rem; font-weight:800; } .kpi .l { color:var(--muted); font-size:.82rem; margin-top:4px; }
+    .section { margin:16px 0; }
+    .todayHeader { display:flex; gap:12px; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; }
+    .pillrow { display:flex; gap:8px; flex-wrap:wrap; }
+    .btn { border:0; border-radius:999px; padding:10px 14px; cursor:pointer; font-weight:800; background:linear-gradient(180deg,#8febff,#66ceff); color:#06111b; box-shadow:0 8px 22px rgba(102,206,255,.22); }
+    .btn.secondary { background:rgba(255,255,255,.08); border:1px solid var(--line); color:var(--text); box-shadow:none; }
+    .btn.success { background:linear-gradient(180deg,#a8ffc4,#78e6a0); color:#062313; }
+    .btn.warn { background:linear-gradient(180deg,#ffe6a9,#ffd479); color:#261a06; }
+    .btn.danger { background:linear-gradient(180deg,#ffadb7,#ff7d89); color:#2b0610; }
+    .grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+    .grid-3 { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+    .exerciseList { display:grid; gap:12px; }
+    .exercise { display:grid; grid-template-columns:1.1fr .9fr; gap:12px; background:rgba(255,255,255,.04); border:1px solid var(--line); border-radius:22px; padding:12px; }
+    .exerciseName { font-size:1.03rem; font-weight:800; margin-bottom:6px; }
+    .repBadge { display:inline-block; padding:7px 11px; border-radius:999px; font-size:.84rem; background:rgba(255,212,121,.13); border:1px solid rgba(255,212,121,.26); color:#fff3cf; margin-bottom:8px; }
+    .cue { color:var(--muted); line-height:1.5; font-size:.95rem; margin-bottom:10px; }
+    .setTable { display:grid; gap:8px; }
+    .setRow { display:grid; grid-template-columns:56px 1fr 1fr 110px; gap:8px; align-items:center; }
+    .small { font-size:.82rem; color:var(--muted); }
+    input[type='number'], input[type='date'], input[type='text'], textarea, select { width:100%; background:rgba(255,255,255,.06); border:1px solid var(--line2); color:var(--text); border-radius:14px; padding:10px 12px; outline:none; }
+    textarea { min-height:110px; resize:vertical; }
+    input::placeholder, textarea::placeholder { color:#8fa0d3; }
+    .check { display:flex; align-items:center; gap:8px; justify-content:flex-end; }
+    input[type='checkbox'] { width:18px; height:18px; accent-color:#7be8ff; }
+    .mediaWrap { position:relative; min-height:230px; border-radius:18px; border:1px solid var(--line2); overflow:hidden; background:linear-gradient(135deg, rgba(116,215,255,.08), rgba(169,141,255,.09)); display:grid; place-items:center; }
+    .mediaWrap img { width:100%; height:100%; object-fit:contain; background:#0a1020; }
+    .placeholder { text-align:center; padding:16px; }
+    .placeholder .icon { font-size:2rem; margin-bottom:8px; opacity:.9; }
+    .inlineActions { display:flex; gap:8px; flex-wrap:wrap; justify-content:center; margin-top:10px; }
+    .dayCard { padding:14px; border-radius:18px; background:rgba(255,255,255,.04); border:1px solid var(--line); }
+    .accordion { display:grid; gap:12px; }
+    .accItem { border:1px solid var(--line); border-radius:22px; overflow:hidden; background:linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.03)); }
+    .accHead { padding:16px; display:flex; align-items:flex-start; justify-content:space-between; gap:10px; cursor:pointer; }
+    .accBody { display:none; padding:0 16px 16px; }
+    .accItem.open .accBody { display:block; }
+    .accItem.open .caret { transform:rotate(180deg); }
+    .caret { width:40px; height:40px; display:grid; place-items:center; border:1px solid var(--line); background:rgba(255,255,255,.06); border-radius:50%; transition:transform .2s ease; }
+    .chartBox { width:100%; height:260px; border:1px solid var(--line); border-radius:18px; background:rgba(255,255,255,.04); padding:8px; }
+    canvas { width:100%; height:100%; }
+    .toolbar { display:flex; gap:8px; flex-wrap:wrap; }
+    .photoGrid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
+    .photoSlot { border:1px dashed rgba(255,255,255,.22); border-radius:18px; padding:12px; background:rgba(255,255,255,.03); }
+    .photoPreview { width:100%; aspect-ratio:3/4; border-radius:14px; border:1px solid var(--line); background:#0a1020; object-fit:cover; display:block; margin-bottom:10px; }
+    .row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+    .tableList { display:grid; gap:8px; }
+    .listRow { display:grid; grid-template-columns:1fr auto auto; gap:8px; align-items:center; padding:10px 12px; border-radius:14px; background:rgba(255,255,255,.04); border:1px solid var(--line); }
+    .footerNote { color:var(--muted); text-align:center; font-size:.84rem; margin:18px 0 8px; }
+    .status { font-size:.82rem; color:var(--muted); }
+    .progressBar { position:relative; height:10px; border-radius:999px; background:rgba(255,255,255,.08); border:1px solid var(--line); overflow:hidden; }
+    .progressFill { position:absolute; left:0; top:0; bottom:0; width:0%; background:linear-gradient(90deg,#84f1ab,#73d4ff); }
+    .hidden { display:none !important; }
+    @media (max-width: 980px) { .hero,.grid-2,.grid-3,.exercise { grid-template-columns:1fr; } .photoGrid{grid-template-columns:1fr;} }
+    @media (max-width: 640px) { .setRow { grid-template-columns:48px 1fr 1fr 90px; } .topbar { border-radius:0 0 18px 18px; } .listRow { grid-template-columns:1fr auto; } .listRow .muted.small { grid-column:1 / -1; } }
+  </style>
+</head>
+<body>
+<div class='app'>
+  <header class='topbar'>
+    <div class='title'>My Fitness App</div>
+    <div class='subtitle'>8-week aesthetic trainer app •</div>
+    <nav class='tabbar' id='tabs'>
+      <button class='active' data-view='dashboard'>Dashboard</button>
+      <button data-view='today'>Today</button>
+      <button data-view='split'>Split</button>
+      <button data-view='progress'>Progress</button>
+      <button data-view='photos'>Photos</button>
+      <button data-view='notes'>Notes</button>
+      <button data-view='library'>GIF Library</button>
+      <button data-view='settings'>Settings</button>
+    </nav>
+  </header>
+
+  <main>
+    <section class='view active' id='view-dashboard'>
+      <div class='hero'>
+        <div class='card'>
+          <h2>Welcome</h2>
+          <p class='muted'>This is your offline-first fitness app for the 8-week aesthetic split. Your workout logs, bodyweight, notes, photos, and uploaded exercise GIFs are saved locally on this device. Use <strong>Export Backup</strong> regularly if you want a portable copy.</p>
+          <div class='chips'>
+            <span class='chip blue'>8 Weeks</span>
+            <span class='chip green'>6 Training Days</span>
+            <span class='chip purple'>8k–12k Steps</span>
+            <span class='chip'>Protein 1.6–2.2 g/kg</span>
+          </div>
+          <div class='grid-2 section'>
+            <div class='dayCard'>
+              <h3 style='margin-top:0'>Trainer Rules</h3>
+              <ul class='muted'>
+                <li>Warm up 5–10 min + 2–4 ramp-up sets before first heavy lift.</li>
+                <li>Rest 2–3 min on compounds; 60–90 sec on isolation; 45–60 sec on abs/pump work.</li>
+                <li>When all sets hit top of rep range with clean form, increase load next time.</li>
+                <li>Stop if you feel sharp pain, swelling, instability, numbness/tingling, or pain worsening rep to rep.</li>
+              </ul>
+            </div>
+            <div class='dayCard'>
+              <h3 style='margin-top:0'>This Week Strategy</h3>
+              <ul class='muted'>
+                <li>Shoulders, upper chest, back width, arms, and waist control drive the look.</li>
+                <li>Legs stay trained for shape, balance, and metabolism.</li>
+                <li>If recovery is poor, convert Day 6 into cardio + mobility only.</li>
+                <li>Sleep, steps, and food quality matter as much as gym sessions.</li>
+              </ul>
+            </div>
+          </div>
+          <div class='toolbar'>
+            <button class='btn' id='goTodayBtn'>Open Today’s Workout</button>
+            <button class='btn secondary' id='quickWeightBtn'>Add Bodyweight</button>
+          </div>
+        </div>
+        <div class='card'>
+          <h2>At a glance</h2>
+          <div class='kpis'>
+            <div class='kpi'><div class='v' id='kpiToday'>—</div><div class='l'>Today</div></div>
+            <div class='kpi'><div class='v' id='kpiDone'>0%</div><div class='l'>Today completion</div></div>
+            <div class='kpi'><div class='v' id='kpiWeight'>—</div><div class='l'>Latest bodyweight</div></div>
+            <div class='kpi'><div class='v' id='kpiPhotos'>0</div><div class='l'>Photo check-ins</div></div>
+          </div>
+          <div class='section'>
+            <div style='display:flex; justify-content:space-between; align-items:center; gap:8px;'>
+              <h3 style='margin:0'>Today progress</h3><span class='status' id='todayStatus'>0 / 0 sets done</span>
+            </div>
+            <div class='progressBar' style='margin-top:10px;'><div class='progressFill' id='todayFill'></div></div>
+          </div>
+          <div class='section'>
+            <h3 style='margin-top:0'>Storage</h3>
+            <div class='muted small'>All tracking data is stored locally in your browser on this device. Upload real GIF files once and they stay available offline here after that.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class='view' id='view-today'>
+      <div class='card'>
+        <div class='todayHeader'>
+          <div>
+            <h2 id='todayTitle'>Today’s Workout</h2>
+            <div class='pillrow'>
+              <span class='chip blue' id='todayFocusChip'>Focus</span>
+              <span class='chip purple' id='todayCardioChip'>Cardio</span>
+            </div>
+          </div>
+          <div class='toolbar'>
+            <button class='btn success' id='markDayDoneBtn'>Mark day complete</button>
+            <button class='btn secondary' id='resetTodayBtn'>Reset today</button>
+          </div>
+        </div>
+        <div class='grid-2 section'>
+          <div class='dayCard'>
+            <h3 style='margin-top:0'>Coach Notes</h3>
+            <ul class='muted' id='todayNotes'></ul>
+          </div>
+          <div class='dayCard'>
+            <h3 style='margin-top:0'>Session Flow</h3>
+            <ul class='muted'>
+              <li>Warm-up: 5–10 min easy cardio + mobility</li>
+              <li>2–4 ramp-up sets for the first compound</li>
+              <li>Main workout + clean tracking</li>
+              <li>Cardio finisher</li>
+              <li>Post-workout: easy walk + water + protein</li>
+            </ul>
+          </div>
+        </div>
+        <div class='exerciseList' id='todayExercises'></div>
+      </div>
+    </section>
+
+    <section class='view' id='view-split'>
+      <div class='card'>
+        <h2>Full Training Split</h2>
+        <div class='accordion' id='splitAccordion'></div>
+      </div>
+    </section>
+
+    <section class='view' id='view-progress'>
+      <div class='grid-2'>
+        <div class='card'>
+          <h2>Bodyweight Log</h2>
+          <div class='grid-2'>
+            <div><label class='small'>Date</label><input type='date' id='weightDate'></div>
+            <div><label class='small'>Bodyweight</label><input type='number' step='0.1' id='weightValue' placeholder='e.g. 78.4'></div>
+          </div>
+          <div class='toolbar section'>
+            <button class='btn' id='addWeightBtn'>Add Weight</button>
+            <button class='btn secondary' id='clearWeightsBtn'>Clear Weight Log</button>
+          </div>
+          <div class='chartBox'><canvas id='weightChart' width='900' height='500'></canvas></div>
+          <div class='tableList section' id='weightList'></div>
+        </div>
+        <div class='card'>
+          <h2>Workout Progress</h2>
+          <div class='grid-3'>
+            <div class='kpi'><div class='v' id='progSessions'>0</div><div class='l'>Completed sessions</div></div>
+            <div class='kpi'><div class='v' id='progSets'>0</div><div class='l'>Logged sets</div></div>
+            <div class='kpi'><div class='v' id='progDays'>0</div><div class='l'>Days with activity</div></div>
+          </div>
+          <div class='section'>
+            <h3 style='margin:0 0 10px'>Weekly Completion</h3>
+            <div class='chartBox'><canvas id='weeklyChart' width='900' height='500'></canvas></div>
+          </div>
+          <div class='dayCard'>
+            <h3 style='margin-top:0'>Progress Tips</h3>
+            <ul class='muted'>
+              <li>Take front/side/back photos weekly in similar lighting.</li>
+              <li>Track bodyweight several mornings per week and use the weekly average.</li>
+              <li>Be consistent with food quality, steps, and sleep for the full 8 weeks.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class='view' id='view-photos'>
+      <div class='card'>
+        <div class='todayHeader'>
+          <div>
+            <h2>Weekly Photo Tracker</h2>
+            <div class='muted'>Upload front / side / back photos for each week. Photos are saved locally offline.</div>
+          </div>
+          <div class='toolbar'>
+            <select id='photoWeekSelect'></select>
+          </div>
+        </div>
+        <div class='photoGrid section'>
+          <div class='photoSlot'>
+            <img class='photoPreview' id='photo-front-preview' alt='Front photo preview'>
+            <div class='row'><strong>Front</strong><span class='small'>Week check-in</span></div>
+            <div class='toolbar section'>
+              <input class='hidden' type='file' accept='image/*' id='photo-front-input'>
+              <button class='btn secondary' data-photo='front'>Upload</button>
+              <button class='btn danger' data-photo-delete='front'>Delete</button>
+            </div>
+          </div>
+          <div class='photoSlot'>
+            <img class='photoPreview' id='photo-side-preview' alt='Side photo preview'>
+            <div class='row'><strong>Side</strong><span class='small'>Week check-in</span></div>
+            <div class='toolbar section'>
+              <input class='hidden' type='file' accept='image/*' id='photo-side-input'>
+              <button class='btn secondary' data-photo='side'>Upload</button>
+              <button class='btn danger' data-photo-delete='side'>Delete</button>
+            </div>
+          </div>
+          <div class='photoSlot'>
+            <img class='photoPreview' id='photo-back-preview' alt='Back photo preview'>
+            <div class='row'><strong>Back</strong><span class='small'>Week check-in</span></div>
+            <div class='toolbar section'>
+              <input class='hidden' type='file' accept='image/*' id='photo-back-input'>
+              <button class='btn secondary' data-photo='back'>Upload</button>
+              <button class='btn danger' data-photo-delete='back'>Delete</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class='view' id='view-notes'>
+      <div class='grid-2'>
+        <div class='card'>
+          <h2>General Notes</h2>
+          <textarea id='generalNotes' placeholder='Write your training notes, food notes, recovery observations, reminders...'></textarea>
+          <div class='toolbar section'><button class='btn' id='saveGeneralNotesBtn'>Save Notes</button></div>
+        </div>
+        <div class='card'>
+          <h2>Day-specific Notes</h2>
+          <div class='grid-2'>
+            <div><label class='small'>Day</label><select id='dayNotesSelect'></select></div>
+            <div><label class='small'>Date</label><input type='date' id='dayNotesDate'></div>
+          </div>
+          <textarea id='dayNotesText' placeholder='Example: shoulder felt tight on lateral raises, slept 6h, cardio felt easy...'></textarea>
+          <div class='toolbar section'>
+            <button class='btn' id='saveDayNoteBtn'>Save Day Note</button>
+            <button class='btn secondary' id='loadDayNoteBtn'>Load Saved Note</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class='view' id='view-library'>
+      <div class='card'>
+        <div class='todayHeader'>
+          <div>
+            <h2>Offline GIF Library</h2>
+            <div class='muted'>Upload <strong>real GIF files</strong> for any exercise. Once uploaded, they are stored locally in the app and shown offline in Today / Split mode.</div>
+          </div>
+          <div class='toolbar'>
+            <button class='btn secondary' id='refreshLibraryBtn'>Refresh</button>
+          </div>
+        </div>
+        <div class='exerciseList' id='libraryList'></div>
+      </div>
+    </section>
+
+    <section class='view' id='view-settings'>
+      <div class='grid-2'>
+        <div class='card'>
+          <h2>Today’s Workout Mode</h2>
+          <div class='grid-2'>
+            <div>
+              <label class='small'>Map weekday to</label>
+              <select id='weekdayMapSelect'></select>
+            </div>
+            <div>
+              <label class='small'>Override today manually</label>
+              <select id='manualTodaySelect'></select>
+            </div>
+          </div>
+          <div class='toolbar section'>
+            <button class='btn' id='saveTodayModeBtn'>Save Today Mode</button>
+          </div>
+          <div class='muted small'>Default mapping is Monday=Day 1 ... Sunday=Day 7.</div>
+        </div>
+        <div class='card'>
+          <h2>Backup / Restore</h2>
+          <div class='muted'>Export your logs, bodyweight, notes, plus uploaded GIFs and progress photos into one backup file. Restore later on the same or another device.</div>
+          <div class='toolbar section'>
+            <button class='btn success' id='exportBackupBtn'>Export Backup</button>
+            <input class='hidden' type='file' id='importBackupInput' accept='application/json'>
+            <button class='btn secondary' id='importBackupBtn'>Import Backup</button>
+          </div>
+          <div class='toolbar section'>
+            <button class='btn danger' id='factoryResetBtn'>Factory Reset App Data</button>
+          </div>
+          <div class='muted small'>Important: data persistence depends on browser storage on the device. Export backups regularly for safety.</div>
+        </div>
+      </div>
+    </section>
+  </main>
+  <div class='footerNote'>Built for your 8-week aesthetic split. Best on iPhone Safari or any modern browser. Fully offline after the file is saved locally and your GIFs/photos are uploaded once.</div>
+</div>
+
+<script>
+const PROGRAM = [{"id": "day1", "name": "Day 1 – Shoulders + Triceps + Abs", "focus": "Round delts + triceps size", "cardio": "15–20 min incline walk", "notes": ["Start with overhead press while fresh.", "Keep lateral raises strict — no swing reps.", "Use triceps exercises for tension and squeeze, not ego weight."], "exercises": [["Overhead Press", "4 x 6–8", "Ribs down, glutes tight, bar path close to face.", "day1-overhead-press", 4], ["Dumbbell Lateral Raise", "4 x 12–18", "Small elbow bend, raise only to shoulder height.", "day1-dumbbell-lateral-raise", 4], ["Cable / Machine Lateral Raise", "3 x 12–15", "Constant tension, short pause at top.", "day1-cable-machine-lateral-raise", 3], ["Rear Delt Fly / Reverse Pec Deck", "4 x 12–15", "Lead with elbows, keep traps quiet.", "day1-rear-delt-fly-reverse-pec-deck", 4], ["Close-Grip Bench Press", "3 x 8–10", "Shoulders packed, elbows controlled.", "day1-close-grip-bench-press", 3], ["Assisted Dips (alt)", "3 x 8–10", "Use assistance if shoulders or depth feel bad.", "day1-assisted-dips-alt", 3], ["Overhead Triceps Extension", "3 x 10–12", "Keep elbows fixed, long-head stretch.", "day1-overhead-triceps-extension", 3], ["Rope Pushdown", "3 x 12–15", "Spread rope apart at bottom.", "day1-rope-pushdown", 3], ["Cable Crunch", "4 x 12–15", "Crunch ribs to pelvis, don’t hinge.", "day1-cable-crunch", 4], ["Hanging Leg Raise", "3 x 10–15", "Posterior pelvic tilt first, no swing.", "day1-hanging-leg-raise", 3]]}, {"id": "day2", "name": "Day 2 – Back + Biceps", "focus": "V-taper + arms", "cardio": "10–15 min walk or cycle", "notes": ["Pull with elbows, not just hands.", "Rows stay chest-up and stable.", "On curls, own the lowering phase."], "exercises": [["Lat Pulldown", "4 x 8–12", "Shoulders down first, elbows drive toward ribs.", "day2-lat-pulldown", 4], ["Pull-Up (alt)", "4 x 6–10", "Full hang with control, chest up.", "day2-pull-up-alt", 4], ["Seated Cable Row", "4 x 8–12", "Pull to lower ribs, don’t rock back.", "day2-seated-cable-row", 4], ["Single-Arm Dumbbell Row", "3 x 10–12", "Flat back, no torso twist.", "day2-single-arm-dumbbell-row", 3], ["Straight-Arm Pulldown", "3 x 12–15", "Feel your lats stretch and contract.", "day2-straight-arm-pulldown", 3], ["Face Pull", "3 x 12–15", "Elbows high, pull to forehead.", "day2-face-pull", 3], ["EZ / Barbell Curl", "3 x 8–10", "Upper arm by side, no body swing.", "day2-ez-barbell-curl", 3], ["Incline Dumbbell Curl", "3 x 10–12", "Deep stretch at bottom.", "day2-incline-dumbbell-curl", 3], ["Hammer Curl", "3 x 10–12", "Neutral grip, don’t let elbows drift back.", "day2-hammer-curl", 3]]}, {"id": "day3", "name": "Day 3 – Legs + Glute Control + Abs", "focus": "Shape, balance, metabolism", "cardio": "20–25 min incline treadmill or brisk walk", "notes": ["Train legs properly — don’t skip them.", "RDL is a hinge, not a squat.", "Lunges are for control and shape."], "exercises": [["Squat", "4 x 8–10", "Brace, knees track over toes, use controllable depth.", "day3-squat", 4], ["Leg Press (alt)", "4 x 8–10", "Keep glutes on the pad, no low-back rounding.", "day3-leg-press-alt", 4], ["Romanian Deadlift", "4 x 8–10", "Soft knees, hips back, bar close to legs.", "day3-romanian-deadlift", 4], ["Walking Lunges", "3 x 12 steps each leg", "Stay rooted and balanced.", "day3-walking-lunges", 3], ["Leg Curl", "3 x 12–15", "Control the return.", "day3-leg-curl", 3], ["Leg Extension", "3 x 12–15", "Pause and squeeze quads at top.", "day3-leg-extension", 3], ["Standing Calf Raise", "4 x 12–15", "Full stretch at bottom, full squeeze at top.", "day3-standing-calf-raise", 4], ["Decline Crunch", "3 x 15", "Curl, don’t yank the neck.", "day3-decline-crunch", 3], ["Plank", "3 x 45–60 sec", "Glutes tight, ribs down.", "day3-plank", 3], ["Russian Twist / Core Twist", "3 x 20", "Rotate with control, don’t fling.", "day3-russian-twist-core-twist", 3]]}, {"id": "day4", "name": "Day 4 – Chest + Shoulders", "focus": "Upper chest + side delts", "cardio": "15 min incline walk", "notes": ["Incline press is the priority.", "Shoulders packed for pressing, traps quiet on raises.", "Push-up burnout = clean pump reps only."], "exercises": [["Incline Dumbbell Press", "4 x 8–10", "Bench around 20–30°, elbows under wrists.", "day4-incline-dumbbell-press", 4], ["Machine Chest Press", "3 x 6–10", "Feet planted, smooth pressing path.", "day4-machine-chest-press", 3], ["Bench Press (alt)", "3 x 6–10", "Control down, no bounce.", "day4-bench-press-alt", 3], ["Cable Fly", "3 x 12–15", "Hug motion, big chest squeeze.", "day4-cable-fly", 3], ["Seated Dumbbell Shoulder Press", "3 x 8–10", "No low-back arch.", "day4-seated-dumbbell-shoulder-press", 3], ["Dumbbell Lateral Raise", "4 x 12–20", "Strict, smooth, shoulders down.", "day4-dumbbell-lateral-raise", 4], ["Rear Delt Fly", "3 x 12–15", "Lead with elbows.", "day4-rear-delt-fly", 3], ["Push-Ups Burnout", "2 sets near failure", "Body in one line, full range.", "day4-push-ups-burnout", 2]]}, {"id": "day5", "name": "Day 5 – Arms Specialization + Abs", "focus": "Biceps, triceps, forearms, abs", "cardio": "15–20 min walk", "notes": ["Chase tension and pump, not ugly cheating.", "Vary elbow angle for fuller arm development.", "Keep forearm work clean if elbows feel tender."], "exercises": [["EZ Bar Curl", "4 x 8–10", "Squeeze the top.", "day5-ez-bar-curl", 4], ["Incline Curl", "3 x 10–12", "Deep stretch, shoulders back.", "day5-incline-curl", 3], ["Cable Curl", "3 x 12–15", "Constant tension; don’t rest at bottom.", "day5-cable-curl", 3], ["Close-Grip Push-Up", "3 x 10–12", "Pick a shoulder-friendly version.", "day5-close-grip-push-up", 3], ["Bench Dip (alt)", "3 x 10–12", "Stop if front shoulders feel cranky.", "day5-bench-dip-alt", 3], ["Overhead Triceps Extension", "3 x 10–12", "Deep stretch, stable elbows.", "day5-overhead-triceps-extension", 3], ["Rope Pushdown", "4 x 12–15", "Full extension every rep.", "day5-rope-pushdown", 4], ["Reverse Curl", "2–3 sets", "Control wrists; no bounce.", "day5-reverse-curl", 2], ["Wrist Curl (alt)", "2–3 sets", "Let the bar roll to fingers, then curl back.", "day5-wrist-curl-alt", 2], ["Cable Crunch", "4 x 12–15", "Crunch down, not back.", "day5-cable-crunch", 4], ["Leg Raise", "3 x 12–15", "Control swing, tuck pelvis.", "day5-leg-raise", 3], ["Side Plank", "3 x 30–45 sec/side", "Stack ribs over pelvis.", "day5-side-plank", 3]]}, {"id": "day6", "name": "Day 6 – Full Upper Pump + Fat-Loss Cardio", "focus": "Shape, blood flow, calorie burn", "cardio": "Choose one: 20–30 min incline walk OR 15 min moderate cycling", "notes": ["This day should feel productive, not crushing.", "Use a lighter pump style.", "If recovery is poor, do cardio + mobility only."], "exercises": [["Lat Pulldown", "3 x 12", "Smooth reps, focus on lat squeeze.", "day6-lat-pulldown", 3], ["Machine Chest Press", "3 x 12", "Controlled tempo, chest squeeze.", "day6-machine-chest-press", 3], ["Lateral Raise", "4 x 15–20", "Light, strict, burning reps.", "day6-lateral-raise", 4], ["Rear Delt Fly", "3 x 15", "Keep traps quiet.", "day6-rear-delt-fly", 3], ["Cable Curl", "3 x 15", "Constant tension.", "day6-cable-curl", 3], ["Rope Pushdown", "3 x 15", "Full extension every rep.", "day6-rope-pushdown", 3], ["Shrugs", "3 x 12–15", "Shrug straight up/down, do not roll shoulders.", "day6-shrugs", 3]]}, {"id": "day7", "name": "Day 7 – Rest / Active Recovery", "focus": "Recovery, posture, mobility", "cardio": "8k–12k steps + mobility", "notes": ["Walk, stretch, sleep well, hydrate.", "No junk binge today.", "Recovery is part of the aesthetic plan."], "exercises": [["Steps", "8,000–12,000", "Split through the day if needed.", "day7-steps", 8], ["Mobility + Stretching", "10–20 min", "Focus on shoulders, hips, chest, T-spine, hamstrings.", "day7-mobility-stretching", 10]]}];
+const STORAGE_KEY = 'aesthetic-offline-app-state-v1';
+const DB_NAME = 'aestheticOfflineMediaDB';
+const DB_VERSION = 1;
+
+const DEFAULT_STATE = {
+  bodyweights: [],
+  logs: {},
+  completedSessions: [],
+  generalNotes: '',
+  dayNotes: {},
+  settings: { manualToday: '', weekdayMap: {0:'day7',1:'day1',2:'day2',3:'day3',4:'day4',5:'day5',6:'day6'} },
+  photoWeeks: {}
+};
+
+let state = loadState();
+let mediaDB = null;
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return structuredClone(DEFAULT_STATE);
+    const parsed = JSON.parse(raw);
+    return deepMerge(structuredClone(DEFAULT_STATE), parsed);
+  } catch(err) {
+    console.error(err); return structuredClone(DEFAULT_STATE);
+  }
+}
+function saveState() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); updateDashboard(); renderProgress(); renderPhotos(); }
+function deepMerge(target, source) {
+  for (const key in source) {
+    if (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key])) {
+      target[key] = deepMerge(target[key] || {}, source[key]);
+    } else { target[key] = source[key]; }
+  }
+  return target;
+}
+function uid() { return Math.random().toString(36).slice(2) + Date.now().toString(36); }
+function todayISO() { const d = new Date(); d.setMinutes(d.getMinutes()-d.getTimezoneOffset()); return d.toISOString().slice(0,10); }
+function getProgramDayById(id) { return PROGRAM.find(d => d.id === id) || PROGRAM[0]; }
+function getTodayDay() {
+  const manual = state.settings.manualToday;
+  if (manual) return getProgramDayById(manual);
+  const wd = new Date().getDay();
+  return getProgramDayById(state.settings.weekdayMap[wd] || 'day1');
+}
+function parseSetCount(repString, fallback=3) { const m = String(repString).match(/^(\d+)/); return m ? parseInt(m[1],10) : fallback; }
+function getLogKey(date, exId, setIndex) { return `${date}__${exId}__${setIndex}`; }
+function setLogVal(date, exId, setIndex, payload) { state.logs[getLogKey(date, exId, setIndex)] = payload; saveState(); }
+function getLogVal(date, exId, setIndex) { return state.logs[getLogKey(date, exId, setIndex)] || {weight:'', reps:'', done:false}; }
+function markSessionComplete(dayId, date) { const key = `${date}__${dayId}`; if (!state.completedSessions.includes(key)) state.completedSessions.push(key); saveState(); }
+function resetDay(dayId, date) { const day = getProgramDayById(dayId); day.exercises.forEach(ex => { const count = ex[4]; for(let i=1;i<=count;i++) delete state.logs[getLogKey(date, ex[3], i)]; }); state.completedSessions = state.completedSessions.filter(k => k !== `${date}__${dayId}`); saveState(); }
+
+function openDB() {
+  return new Promise((resolve,reject)=>{
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
+    req.onupgradeneeded = (e) => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains('files')) db.createObjectStore('files', { keyPath:'id' });
+    };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+function dbPut(item) { return new Promise((resolve,reject)=>{ const tx = mediaDB.transaction('files','readwrite'); tx.objectStore('files').put(item); tx.oncomplete=()=>resolve(true); tx.onerror=()=>reject(tx.error); }); }
+function dbGet(id) { return new Promise((resolve,reject)=>{ const tx = mediaDB.transaction('files','readonly'); const req = tx.objectStore('files').get(id); req.onsuccess=()=>resolve(req.result); req.onerror=()=>reject(req.error); }); }
+function dbDelete(id) { return new Promise((resolve,reject)=>{ const tx = mediaDB.transaction('files','readwrite'); tx.objectStore('files').delete(id); tx.oncomplete=()=>resolve(true); tx.onerror=()=>reject(tx.error); }); }
+function dbAll() { return new Promise((resolve,reject)=>{ const tx = mediaDB.transaction('files','readonly'); const req = tx.objectStore('files').getAll(); req.onsuccess=()=>resolve(req.result||[]); req.onerror=()=>reject(req.error); }); }
+
+async function fileToDataURL(file) { return new Promise((resolve,reject)=>{ const fr = new FileReader(); fr.onload=()=>resolve(fr.result); fr.onerror=()=>reject(fr.error); fr.readAsDataURL(file); }); }
+async function saveGifForExercise(exId, file) { const dataUrl = await fileToDataURL(file); await dbPut({ id:`gif__${exId}`, dataUrl, name:file.name, type:file.type, updatedAt:Date.now() }); }
+async function getGifForExercise(exId) { const rec = await dbGet(`gif__${exId}`); return rec ? rec.dataUrl : ''; }
+async function savePhoto(week, view, file) { const dataUrl = await fileToDataURL(file); await dbPut({ id:`photo__${week}__${view}`, dataUrl, name:file.name, type:file.type, updatedAt:Date.now() }); if (!state.photoWeeks[week]) state.photoWeeks[week]={}; state.photoWeeks[week][view] = true; saveState(); }
+async function getPhoto(week, view) { const rec = await dbGet(`photo__${week}__${view}`); return rec ? rec.dataUrl : ''; }
+async function deletePhoto(week, view) { await dbDelete(`photo__${week}__${view}`); if (state.photoWeeks[week]) delete state.photoWeeks[week][view]; saveState(); }
+
+function setupTabs() {
+  document.querySelectorAll('#tabs button').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      document.querySelectorAll('#tabs button').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+      document.getElementById('view-'+btn.dataset.view).classList.add('active');
+      if (btn.dataset.view === 'today') renderToday();
+      if (btn.dataset.view === 'split') renderSplit();
+      if (btn.dataset.view === 'progress') renderProgress();
+      if (btn.dataset.view === 'photos') renderPhotos();
+      if (btn.dataset.view === 'library') renderLibrary();
+    });
+  });
+}
+
+function setInner(el, html) { document.getElementById(el).innerHTML = html; }
+function esc(s) { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+async function renderExerciseCard(ex, date, compact=false) {
+  const [name, reps, cue, exId, setCount] = ex;
+  const gif = await getGifForExercise(exId);
+  let setsHtml = '';
+  for (let i=1;i<=setCount;i++) {
+    const val = getLogVal(date, exId, i);
+    setsHtml += `<div class='setRow'>
+      <div class='small'><strong>Set ${i}</strong></div>
+      <input type='number' id='w-${exId}-${i}' value='${esc(val.weight)}' placeholder='kg'>
+      <input type='text' id='r-${exId}-${i}' value='${esc(val.reps)}' placeholder='reps'>
+      <label class='check small'><input type='checkbox' id='d-${exId}-${i}' ${val.done ? 'checked':''}> done</label>
+    </div>`;
+  }
+  return `<article class='exercise'>
+    <div>
+      <div class='exerciseName'>${name}</div>
+      <div class='repBadge'>${reps}</div>
+      <div class='cue'>${cue}</div>
+      <div class='setTable'>${setsHtml}</div>
+      <div class='toolbar' style='margin-top:10px;'>
+        <button class='btn secondary' onclick="saveExerciseSets('${date}','${exId}',${setCount})">Save Sets</button>
+      </div>
+    </div>
+    <div class='mediaWrap'>
+      ${gif ? `<img src='${gif}' alt='${name} GIF'>` : `<div class='placeholder'><div class='icon'>🎞️</div><div><strong>${name}</strong></div><div class='small'>No offline GIF yet. Upload a real GIF once and it will stay stored offline in this app.</div><div class='inlineActions'><button class='btn secondary' onclick="triggerGifUpload('${exId}')">Upload GIF</button></div></div>`}
+      <input class='hidden' type='file' accept='image/gif,image/*' id='gif-input-${exId}' onchange="handleGifUpload(event,'${exId}')">
+    </div>
+  </article>`;
+}
+
+window.saveExerciseSets = function(date, exId, setCount) {
+  for (let i=1;i<=setCount;i++) {
+    const weight = document.getElementById(`w-${exId}-${i}`)?.value || '';
+    const reps = document.getElementById(`r-${exId}-${i}`)?.value || '';
+    const done = document.getElementById(`d-${exId}-${i}`)?.checked || false;
+    setLogVal(date, exId, i, {weight, reps, done});
+  }
+  updateDashboard();
+  renderProgress();
+};
+window.triggerGifUpload = function(exId) { document.getElementById(`gif-input-${exId}`).click(); };
+window.handleGifUpload = async function(event, exId) {
+  const file = event.target.files?.[0]; if (!file) return;
+  await saveGifForExercise(exId, file);
+  renderToday(); renderSplit(); renderLibrary();
+};
+window.toggleAcc = function(id) { document.getElementById(id).classList.toggle('open'); };
+
+async function renderToday() {
+  const day = getTodayDay();
+  const date = todayISO();
+  document.getElementById('todayTitle').textContent = day.name;
+  document.getElementById('todayFocusChip').textContent = 'Focus: ' + day.focus;
+  document.getElementById('todayCardioChip').textContent = 'Cardio: ' + day.cardio;
+  document.getElementById('todayNotes').innerHTML = day.notes.map(n=>`<li>${esc(n)}</li>`).join('');
+  let html = '';
+  for (const ex of day.exercises) html += await renderExerciseCard(ex, date);
+  document.getElementById('todayExercises').innerHTML = html;
+  updateDashboard();
+}
+
+async function renderSplit() {
+  const root = document.getElementById('splitAccordion');
+  let out = '';
+  for (let idx=0; idx<PROGRAM.length; idx++) {
+    const day = PROGRAM[idx];
+    let body = `<div class='grid-2 section'><div class='dayCard'><h3 style='margin-top:0'>Coach Notes</h3><ul class='muted'>${day.notes.map(n=>`<li>${esc(n)}</li>`).join('')}</ul></div><div class='dayCard'><h3 style='margin-top:0'>Session Flow</h3><ul class='muted'><li>Warm-up + ramp-up</li><li>Main workout</li><li>Cardio finisher</li></ul></div></div><div class='exerciseList'>`;
+    for (const ex of day.exercises) body += await renderExerciseCard(ex, todayISO());
+    body += `</div>`;
+    out += `<div class='accItem ${idx===0?'open':''}' id='acc-${day.id}'><div class='accHead' onclick="toggleAcc('acc-${day.id}')"><div><div class='exerciseName'>${day.name}</div><div class='pillrow'><span class='chip blue'>Focus: ${day.focus}</span><span class='chip purple'>Cardio: ${day.cardio}</span></div></div><div class='caret'>⌄</div></div><div class='accBody'>${body}</div></div>`;
+  }
+  root.innerHTML = out;
+}
+
+function updateDashboard() {
+  const day = getTodayDay(); const date = todayISO();
+  document.getElementById('kpiToday').textContent = day.name.replace('Day ','').replace(' – ',' · ');
+  let totalSets = 0, doneSets = 0;
+  day.exercises.forEach(ex => { for (let i=1;i<=ex[4];i++) { totalSets++; if (getLogVal(date, ex[3], i).done) doneSets++; } });
+  const pct = totalSets ? Math.round(doneSets * 100 / totalSets) : 0;
+  document.getElementById('kpiDone').textContent = pct + '%';
+  document.getElementById('todayStatus').textContent = `${doneSets} / ${totalSets} sets done`;
+  document.getElementById('todayFill').style.width = pct + '%';
+  const latestWeight = [...state.bodyweights].sort((a,b)=>a.date.localeCompare(b.date)).slice(-1)[0];
+  document.getElementById('kpiWeight').textContent = latestWeight ? latestWeight.value : '—';
+  document.getElementById('kpiPhotos').textContent = Object.keys(state.photoWeeks).length;
+}
+
+function renderWeightList() {
+  const root = document.getElementById('weightList');
+  const rows = [...state.bodyweights].sort((a,b)=>b.date.localeCompare(a.date));
+  root.innerHTML = rows.map(r=>`<div class='listRow'><div><strong>${r.value}</strong><div class='muted small'>${r.date}</div></div><button class='btn secondary' onclick="editWeight('${r.id}')">Edit</button><button class='btn danger' onclick="deleteWeight('${r.id}')">Delete</button></div>`).join('') || `<div class='muted'>No bodyweight entries yet.</div>`;
+}
+window.editWeight = function(id) { const row = state.bodyweights.find(x=>x.id===id); if(!row) return; document.getElementById('weightDate').value=row.date; document.getElementById('weightValue').value=row.value; };
+window.deleteWeight = function(id) { state.bodyweights = state.bodyweights.filter(x=>x.id!==id); saveState(); renderWeightList(); renderProgress(); };
+
+function drawLineChart(canvasId, points, color='#74d7ff', fill='rgba(116,215,255,.14)', emptyLabel='No data yet') {
+  const cv = document.getElementById(canvasId); const ctx = cv.getContext('2d');
+  const w = cv.width, h = cv.height; ctx.clearRect(0,0,w,h);
+  ctx.fillStyle = 'rgba(255,255,255,.03)'; ctx.fillRect(0,0,w,h);
+  ctx.strokeStyle = 'rgba(255,255,255,.10)'; ctx.lineWidth = 1;
+  for (let i=1;i<=4;i++) { const y = 20 + i*(h-40)/5; ctx.beginPath(); ctx.moveTo(50,y); ctx.lineTo(w-20,y); ctx.stroke(); }
+  if (!points.length) { ctx.fillStyle = '#b7c3e8'; ctx.font = '24px sans-serif'; ctx.fillText(emptyLabel, 60, h/2); return; }
+  const vals = points.map(p=>p.y), labels = points.map(p=>p.label);
+  let min = Math.min(...vals), max = Math.max(...vals); if (min===max) { min -= 1; max += 1; }
+  const left=55, right=w-25, top=25, bottom=h-45;
+  const xStep = points.length>1 ? (right-left)/(points.length-1) : 0;
+  const toX = i => left + i*xStep;
+  const toY = v => bottom - ((v-min)/(max-min))*(bottom-top);
+  ctx.fillStyle = '#b7c3e8'; ctx.font = '16px sans-serif';
+  ctx.fillText(max.toFixed(1), 8, top+6); ctx.fillText(min.toFixed(1), 8, bottom+6);
+  ctx.beginPath(); points.forEach((p,i)=>{ const x=toX(i), y=toY(p.y); i?ctx.lineTo(x,y):ctx.moveTo(x,y); }); ctx.strokeStyle=color; ctx.lineWidth=3; ctx.stroke();
+  ctx.lineTo(toX(points.length-1), bottom); ctx.lineTo(toX(0), bottom); ctx.closePath(); ctx.fillStyle=fill; ctx.fill();
+  ctx.beginPath(); points.forEach((p,i)=>{ const x=toX(i), y=toY(p.y); ctx.moveTo(x+4,y); ctx.arc(x,y,4,0,Math.PI*2); }); ctx.fillStyle=color; ctx.fill();
+  ctx.fillStyle='#b7c3e8'; ctx.font='14px sans-serif';
+  points.forEach((p,i)=>{ const x=toX(i); if (i===0 || i===points.length-1 || points.length<=8 || i%2===0) ctx.fillText(p.label, x-15, h-16); });
+}
+
+function weekOf(dateStr) { const d = new Date(dateStr); const onejan = new Date(d.getFullYear(),0,1); return Math.ceil((((d - onejan)/86400000) + onejan.getDay()+1)/7); }
+
+function renderProgress() {
+  renderWeightList();
+  const sortedWeights = [...state.bodyweights].sort((a,b)=>a.date.localeCompare(b.date));
+  drawLineChart('weightChart', sortedWeights.map(x=>({label:x.date.slice(5), y:parseFloat(x.value)})), '#74d7ff', 'rgba(116,215,255,.12)', 'No bodyweight data yet');
+
+  const dayKeys = Object.keys(state.logs);
+  const uniqueDays = new Set(dayKeys.map(k=>k.split('__')[0]));
+  document.getElementById('progDays').textContent = uniqueDays.size;
+  document.getElementById('progSets').textContent = dayKeys.filter(k => state.logs[k]?.done).length;
+  document.getElementById('progSessions').textContent = state.completedSessions.length;
+
+  const byWeek = {};
+  state.completedSessions.forEach(key => { const date = key.split('__')[0]; const wk = 'W' + weekOf(date); byWeek[wk] = (byWeek[wk]||0)+1; });
+  const weeklyPoints = Object.keys(byWeek).sort((a,b)=>parseInt(a.slice(1))-parseInt(b.slice(1))).map(k=>({label:k, y:byWeek[k]}));
+  drawLineChart('weeklyChart', weeklyPoints, '#82f0a6', 'rgba(130,240,166,.12)', 'No completed sessions yet');
+  updateDashboard();
+}
+
+function populatePhotoWeeks() { const sel = document.getElementById('photoWeekSelect'); sel.innerHTML=''; for(let i=1;i<=8;i++){ const o=document.createElement('option'); o.value='week'+i; o.textContent='Week '+i; sel.appendChild(o); } }
+async function renderPhotos() {
+  const week = document.getElementById('photoWeekSelect')?.value || 'week1';
+  for (const view of ['front','side','back']) {
+    const img = document.getElementById(`photo-${view}-preview`); if (!img) continue;
+    const src = await getPhoto(week, view); img.src = src || ''; img.style.display = src ? 'block' : 'none';
+  }
+}
+async function handlePhotoChosen(view, file) { const week = document.getElementById('photoWeekSelect').value; await savePhoto(week, view, file); renderPhotos(); updateDashboard(); }
+
+function populateDaySelects() {
+  const daySelect = document.getElementById('dayNotesSelect');
+  const manualSel = document.getElementById('manualTodaySelect');
+  const weekdaySel = document.getElementById('weekdayMapSelect');
+  [daySelect, manualSel].forEach(sel => { sel.innerHTML=''; });
+  const none = document.createElement('option'); none.value=''; none.textContent='Use weekday default'; manualSel.appendChild(none);
+  PROGRAM.forEach(d => {
+    const opt1=document.createElement('option'); opt1.value=d.id; opt1.textContent=d.name; daySelect.appendChild(opt1);
+    const opt2=document.createElement('option'); opt2.value=d.id; opt2.textContent=d.name; manualSel.appendChild(opt2);
+  });
+  daySelect.value = PROGRAM[0].id;
+  manualSel.value = state.settings.manualToday || '';
+  weekdaySel.innerHTML='';
+  ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'].forEach((wd, idx)=>{
+    const opt = document.createElement('option'); const mapped = state.settings.weekdayMap[idx] || 'day1'; const day = getProgramDayById(mapped); opt.value=idx; opt.textContent=`${wd} → ${day.name}`; weekdaySel.appendChild(opt);
+  });
+}
+
+async function renderLibrary() {
+  const root = document.getElementById('libraryList');
+  let html = '';
+  for (const day of PROGRAM) {
+    for (const ex of day.exercises) {
+      const [name,reps,cue,exId] = ex; const gif = await getGifForExercise(exId);
+      html += `<article class='exercise'><div><div class='exerciseName'>${name}</div><div class='repBadge'>${day.name}</div><div class='cue'>${cue}</div><div class='toolbar'><button class='btn secondary' onclick="triggerGifUpload('${exId}')">Upload / Replace GIF</button>${gif ? `<button class='btn danger' onclick="deleteGif('${exId}')">Delete GIF</button>`:''}</div><input class='hidden' type='file' accept='image/gif,image/*' id='gif-input-${exId}' onchange="handleGifUpload(event,'${exId}')"></div><div class='mediaWrap'>${gif ? `<img src='${gif}' alt='${name} gif'>` : `<div class='placeholder'><div class='icon'>🧩</div><div><strong>No GIF uploaded</strong></div><div class='small'>Upload a real exercise GIF and it will be available offline.</div></div>`}</div></article>`;
+    }
+  }
+  root.innerHTML = html;
+}
+window.deleteGif = async function(exId) { await dbDelete(`gif__${exId}`); renderLibrary(); renderToday(); renderSplit(); };
+
+async function exportBackup() {
+  const files = await dbAll();
+  const payload = { exportedAt:new Date().toISOString(), app:'My Fitness App', version:'1.0', state, files };
+  const blob = new Blob([JSON.stringify(payload)], {type:'application/json'});
+  const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href=url; a.download='aesthetic-offline-backup-'+todayISO()+'.json'; a.click(); URL.revokeObjectURL(url);
+}
+async function importBackupFile(file) {
+  const text = await file.text(); const payload = JSON.parse(text);
+  if (!payload.state) throw new Error('Invalid backup file');
+  state = deepMerge(structuredClone(DEFAULT_STATE), payload.state); saveState();
+  if (Array.isArray(payload.files)) for (const rec of payload.files) await dbPut(rec);
+  renderAll();
+}
+async function factoryReset() {
+  if (!confirm('Delete all app data on this device? This cannot be undone unless you already exported a backup.')) return;
+  localStorage.removeItem(STORAGE_KEY);
+  state = structuredClone(DEFAULT_STATE);
+  const files = await dbAll(); for (const f of files) await dbDelete(f.id);
+  renderAll(); saveState();
+}
+
+function renderAll() { populateDaySelects(); populatePhotoWeeks(); renderToday(); renderSplit(); renderProgress(); renderPhotos(); renderLibrary(); updateDashboard(); renderNotes(); }
+function renderNotes() { document.getElementById('generalNotes').value = state.generalNotes || ''; document.getElementById('dayNotesDate').value = todayISO(); }
+
+window.addEventListener('DOMContentLoaded', async () => {
+  mediaDB = await openDB();
+  setupTabs(); populateDaySelects(); populatePhotoWeeks();
+  document.getElementById('weightDate').value = todayISO();
+  document.getElementById('goTodayBtn').onclick = () => document.querySelector("button[data-view='today']").click();
+  document.getElementById('quickWeightBtn').onclick = () => { document.querySelector("button[data-view='progress']").click(); document.getElementById('weightValue').focus(); };
+  document.getElementById('addWeightBtn').onclick = () => {
+    const date = document.getElementById('weightDate').value || todayISO(); const value = document.getElementById('weightValue').value;
+    if (!value) return; const existing = state.bodyweights.find(x=>x.date===date); if (existing) existing.value=value; else state.bodyweights.push({id:uid(), date, value}); saveState(); renderProgress(); document.getElementById('weightValue').value='';
+  };
+  document.getElementById('clearWeightsBtn').onclick = () => { if(confirm('Clear all weight entries?')) { state.bodyweights=[]; saveState(); renderProgress(); } };
+  document.getElementById('markDayDoneBtn').onclick = () => { markSessionComplete(getTodayDay().id, todayISO()); updateDashboard(); renderProgress(); };
+  document.getElementById('resetTodayBtn').onclick = () => { if(confirm('Reset all logs for today?')) { resetDay(getTodayDay().id, todayISO()); renderToday(); renderProgress(); } };
+  document.getElementById('photoWeekSelect').onchange = renderPhotos;
+  document.querySelectorAll('[data-photo]').forEach(btn => btn.onclick = () => document.getElementById(`photo-${btn.dataset.photo}-input`).click());
+  document.querySelectorAll('[data-photo-delete]').forEach(btn => btn.onclick = async () => { await deletePhoto(document.getElementById('photoWeekSelect').value, btn.dataset.photoDelete); renderPhotos(); });
+  ['front','side','back'].forEach(view => document.getElementById(`photo-${view}-input`).addEventListener('change', async (e)=>{ const file = e.target.files?.[0]; if(file) await handlePhotoChosen(view,file); }));
+  document.getElementById('saveGeneralNotesBtn').onclick = () => { state.generalNotes = document.getElementById('generalNotes').value; saveState(); };
+  document.getElementById('saveDayNoteBtn').onclick = () => { const k = `${document.getElementById('dayNotesDate').value}__${document.getElementById('dayNotesSelect').value}`; state.dayNotes[k] = document.getElementById('dayNotesText').value; saveState(); };
+  document.getElementById('loadDayNoteBtn').onclick = () => { const k = `${document.getElementById('dayNotesDate').value}__${document.getElementById('dayNotesSelect').value}`; document.getElementById('dayNotesText').value = state.dayNotes[k] || ''; };
+  document.getElementById('refreshLibraryBtn').onclick = renderLibrary;
+  document.getElementById('saveTodayModeBtn').onclick = () => { state.settings.manualToday = document.getElementById('manualTodaySelect').value; const sel = document.getElementById('weekdayMapSelect'); const idx = parseInt(sel.value,10); const mappedFromText = sel.options[sel.selectedIndex].textContent; saveState(); renderAll(); };
+  document.getElementById('weekdayMapSelect').addEventListener('change', (e)=>{ const idx = parseInt(e.target.value,10); const dayId = prompt('Enter day id to map (' + PROGRAM.map(d=>d.id).join(', ') + ')', state.settings.weekdayMap[idx] || 'day1'); if(dayId && PROGRAM.some(d=>d.id===dayId)) { state.settings.weekdayMap[idx]=dayId; saveState(); populateDaySelects(); } else { populateDaySelects(); } });
+  document.getElementById('exportBackupBtn').onclick = exportBackup;
+  document.getElementById('importBackupBtn').onclick = () => document.getElementById('importBackupInput').click();
+  document.getElementById('importBackupInput').addEventListener('change', async (e)=>{ const file = e.target.files?.[0]; if (!file) return; try { await importBackupFile(file); alert('Backup imported successfully.'); } catch(err) { alert('Import failed: ' + err.message); } });
+  document.getElementById('factoryResetBtn').onclick = factoryReset;
+  renderAll();
+});
+</script>
+</body>
+</html>
